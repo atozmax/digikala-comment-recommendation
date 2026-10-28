@@ -1,12 +1,13 @@
-"""Clean the four-column Digikala review frame.
+"""Clean the Digikala review frame.
 
 The steps follow ``notebooks/01-data-cleaning.ipynb``: keep
-``id``, ``body``, ``product_id``, and ``rate``; drop missing bodies;
-keep rates in ``[0, 5]``; normalize whitespace; drop empty bodies;
-keep one row per ``id``; drop any remaining full-row duplicates.
-Rows that share a body and nothing else are counted and kept.
+``id``, ``body``, ``product_id``, ``recommendation_status``, and
+``rate``; drop a missing body or recommendation; keep rates in
+``[0, 5]``; normalize whitespace; drop empty bodies; keep one row
+per ``id``; drop any remaining full-row duplicates. Rows that share
+a body and nothing else are counted and kept.
 
-This module does not read the comments CSV. Pass a DataFrame in.
+This module reads and writes with Polars. Pass a DataFrame in.
 """
 
 from __future__ import annotations
@@ -16,10 +17,16 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-import pandas as pd
+import polars as pl
 from dotenv import find_dotenv, load_dotenv
 
-PROJECT_COLUMNS: tuple[str, ...] = ("id", "body", "product_id", "rate")
+PROJECT_COLUMNS: tuple[str, ...] = (
+    "id",
+    "body",
+    "product_id",
+    "recommendation_status",
+    "rate",
+)
 
 # Paths are relative to the repository root, matching the notebook's
 # ../data/... reads and writes from notebooks/.
@@ -54,6 +61,7 @@ class CleaningSummary:
     rows_before: int
     rows_after: int
     dropped_missing_body: int
+    dropped_missing_recommendation: int
     dropped_out_of_range_rate: int
     dropped_empty_body: int
     dropped_duplicate_ids: int
@@ -61,105 +69,107 @@ class CleaningSummary:
     repeated_bodies_remaining: int
 
 
-def select_project_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Return a copy with only ``id``, ``body``, ``product_id``, and ``rate``."""
-    return df.loc[:, list(PROJECT_COLUMNS)].copy()
+def select_project_columns(df: pl.DataFrame) -> pl.DataFrame:
+    """Return a frame with ``id``, ``body``, ``product_id``, ``recommendation_status``, and ``rate``."""
+    return df.select(list(PROJECT_COLUMNS))
 
 
-def drop_missing_bodies(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+def drop_missing_bodies(df: pl.DataFrame) -> tuple[pl.DataFrame, int]:
     """Drop rows whose ``body`` is missing. Return the frame and the count."""
-    kept = df.dropna(subset=["body"]).reset_index(drop=True)
-    return kept, len(df) - len(kept)
+    kept = df.drop_nulls(subset=["body"])
+    return kept, df.height - kept.height
+
+
+def drop_missing_recommendations(df: pl.DataFrame) -> tuple[pl.DataFrame, int]:
+    """Drop rows whose ``recommendation_status`` is missing."""
+    kept = df.drop_nulls(subset=["recommendation_status"])
+    return kept, df.height - kept.height
 
 
 def filter_rates(
-    df: pd.DataFrame,
+    df: pl.DataFrame,
     *,
     minimum: float = 0.0,
     maximum: float = 5.0,
-) -> tuple[pd.DataFrame, int]:
+) -> tuple[pl.DataFrame, int]:
     """Keep rates inside ``[minimum, maximum]``, including both ends.
 
     Rate 0 and fractional values inside the interval stay. A rate such
     as 2500 is dropped. Missing rates fail the comparison and are dropped.
     """
-    mask = (df["rate"] >= minimum) & (df["rate"] <= maximum)
-    kept = df.loc[mask].copy()
-    return kept, len(df) - len(kept)
+    kept = df.filter((pl.col("rate") >= minimum) & (pl.col("rate") <= maximum))
+    return kept, df.height - kept.height
 
 
-def normalize_bodies(df: pd.DataFrame) -> pd.DataFrame:
+def normalize_bodies(df: pl.DataFrame) -> pl.DataFrame:
     """Replace CR, LF, and tab with a space, collapse whitespace, and strip.
 
-    Returns a copy. The caller's frame is left unchanged.
+    Returns a new frame. The caller's frame is left unchanged.
     """
-    out = df.copy()
-    out["body"] = (
-        out["body"]
-        .str.replace(r"[\r\n\t]+", " ", regex=True)
-        .str.replace(r"\s+", " ", regex=True)
-        .str.strip()
+    return df.with_columns(
+        pl.col("body")
+        .str.replace_all(r"[\r\n\t]+", " ")
+        .str.replace_all(r"\s+", " ")
+        .str.strip_chars()
     )
-    return out
 
 
-def drop_empty_bodies(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+def drop_empty_bodies(df: pl.DataFrame) -> tuple[pl.DataFrame, int]:
     """Drop rows whose ``body`` is an empty string after normalization."""
-    kept = df.loc[df["body"].ne("")].copy()
-    return kept, len(df) - len(kept)
+    kept = df.filter(pl.col("body") != "")
+    return kept, df.height - kept.height
 
 
-def drop_duplicate_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+def drop_duplicate_ids(df: pl.DataFrame) -> tuple[pl.DataFrame, int]:
     """Drop surplus rows that repeat an ``id``. Keep the first row of each id.
 
-    The count is only the surplus (``id.duplicated().sum()``). It is not
-    the number of rows that sit in a duplicate group.
+    The count is only the surplus. It is not the number of rows that sit
+    in a duplicate group.
     """
-    dropped = int(df["id"].duplicated().sum())
-    kept = df.drop_duplicates(subset=["id"], keep="first")
-    return kept, dropped
+    kept = df.unique(subset=["id"], keep="first", maintain_order=True)
+    return kept, df.height - kept.height
 
 
-def drop_duplicate_rows(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+def drop_duplicate_rows(df: pl.DataFrame) -> tuple[pl.DataFrame, int]:
     """Drop extra copies of a fully identical row. Keep the first copy."""
-    dropped = int(df.duplicated().sum())
-    kept = df.drop_duplicates(keep="first")
-    return kept, dropped
+    kept = df.unique(keep="first", maintain_order=True)
+    return kept, df.height - kept.height
 
 
-def count_repeated_bodies(df: pd.DataFrame) -> int:
+def count_repeated_bodies(df: pl.DataFrame) -> int:
     """Count extra copies of a ``body``. Do not drop those rows.
 
     Short texts such as «عالی» are real reviews of different products.
-    The count is ``keep='first'`` extras, not every row that shares a body.
+    The count is the extra copies, not every row that shares a body.
     """
-    return int(df["body"].duplicated().sum())
+    return df.height - df.get_column("body").n_unique()
 
 
-def clean_reviews(df: pd.DataFrame) -> tuple[pd.DataFrame, CleaningSummary]:
+def clean_reviews(df: pl.DataFrame) -> tuple[pl.DataFrame, CleaningSummary]:
     """Apply the notebook cleaning steps and return the frame plus a summary.
 
-    Order: project columns, missing bodies, rates in ``[0, 5]``, body
-    whitespace, empty bodies, duplicate ids, full-row duplicates.
-    Repeated bodies are counted in the summary and kept.
+    Order: project columns, missing bodies, missing recommendations,
+    rates in ``[0, 5]``, body whitespace, empty bodies, duplicate ids,
+    full-row duplicates. Repeated bodies are counted in the summary and kept.
 
-    ``rows_before`` is the length of ``df`` before the column cut.
+    ``rows_before`` is the height of ``df`` before the column cut.
     The input frame is not modified.
     """
-    rows_before = len(df)
+    rows_before = df.height
     frame = select_project_columns(df)
     frame, dropped_missing_body = drop_missing_bodies(frame)
+    frame, dropped_missing_recommendation = drop_missing_recommendations(frame)
     frame, dropped_out_of_range_rate = filter_rates(frame)
     frame = normalize_bodies(frame)
     frame, dropped_empty_body = drop_empty_bodies(frame)
     frame, dropped_duplicate_ids = drop_duplicate_ids(frame)
     frame, dropped_duplicate_rows = drop_duplicate_rows(frame)
     repeated_bodies_remaining = count_repeated_bodies(frame)
-    frame = frame.reset_index(drop=True)
     summary = CleaningSummary(
         rows_before=rows_before,
-        rows_after=len(frame),
+        rows_after=frame.height,
         dropped_missing_body=dropped_missing_body,
+        dropped_missing_recommendation=dropped_missing_recommendation,
         dropped_out_of_range_rate=dropped_out_of_range_rate,
         dropped_empty_body=dropped_empty_body,
         dropped_duplicate_ids=dropped_duplicate_ids,
@@ -185,11 +195,21 @@ def clean_reviews_file(input_csv: str | Path, output_csv: str | Path) -> Cleanin
     ``input_csv`` is read with the notebook's missing-value tokens.
     Parent directories of ``output_csv`` are created when missing.
     """
-    frame = pd.read_csv(input_csv, na_values=NA_VALUES)
+    frame = pl.read_csv(
+        input_csv,
+        null_values=NA_VALUES,
+        schema_overrides={
+            "id": pl.Int64,
+            "body": pl.String,
+            "product_id": pl.Int64,
+            "recommendation_status": pl.String,
+            "rate": pl.Float64,
+        },
+    )
     cleaned, summary = clean_reviews(frame)
     output_path = Path(output_csv)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    cleaned.to_csv(output_path, index=False)
+    cleaned.write_csv(output_path)
     return summary
 
 
@@ -250,6 +270,10 @@ def main(argv: list[str] | None = None) -> None:
     print(f"output: {args.output}")
     print(f"rows before: {format_count(summary.rows_before, loaded)}")
     print(f"dropped missing body: {format_count(summary.dropped_missing_body, loaded)}")
+    print(
+        "dropped missing recommendation: "
+        f"{format_count(summary.dropped_missing_recommendation, loaded)}"
+    )
     print(
         "dropped out-of-range rate: "
         f"{format_count(summary.dropped_out_of_range_rate, loaded)}"

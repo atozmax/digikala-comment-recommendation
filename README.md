@@ -40,3 +40,12 @@ python -m src cleaning \
 ```
 
 A flag wins over `.env`, and `.env` wins over the hardcoded defaults. A variable already set in the shell is left as it is. The command prints the loaded row count and how many rows each cleaning step drops, each with its percent of the loaded rows.
+
+Preprocess the cleaned bodies, then tokenize that file:
+
+```bash
+python -m src preprocess
+python -m src tokenize
+```
+
+`preprocess` reads `data/cleaned/digikala-comments-cleaned.csv` and writes `data/processed/digikala-comments-preprocessed.csv`. It maps Arabic letters onto Persian letters, folds ASCII and Arabic-Indic digits onto Persian digits, keeps one half-space inside a word, and keeps emoji and Latin letters. `tokenize` reads that CSV and writes `data/processed/digikala-comments-tokenized.parquet` with the `HooshvareLab/bert-fa-base-uncased` tokenizer, truncated at 512 tokens. The paths and the checkpoint name are in `.env.example`.

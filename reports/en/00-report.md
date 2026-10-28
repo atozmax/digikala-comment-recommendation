@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`.
 
 ## 1. File and parse
 
@@ -308,3 +308,70 @@ The texts that repeat most, and disagree on the label, are short and appear on m
 4. Train `rating_band`, not the raw rate. Keep the single rate of 2500 out of the bands.
 5. A 512-token cap truncates the far tail. The 99th percentile is 62 whitespace words.
 6. Do not merge reviews that share a body. 31,409 repeated texts carry more than one recommendation value.
+
+## 10. Characters inside the raw body
+
+The last cell of `notebooks/02-descriptive-analysis.ipynb` reads the original `body`, before spaces and line breaks are collapsed. The denominator is every parsed review, 6,156,289, including empty bodies. A review that contains two kinds of character is counted in both. The saved output of that cell is the printed reading below. It does not include a separate match total for each pattern.
+
+172 reviews are only an emoji once spaces are removed. That is 0.00% of the file at two decimal places. An emoji-only body is still a review.
+
+| Digit script | Share of reviews |
+| --- | ---: |
+| ASCII `0-9` | 1.56% |
+| Persian `۰-۹` | 3.17% |
+| Arabic-Indic `٠-٩` | 0.02% |
+
+2,796 reviews use both ASCII and Persian digits. 13 use both ASCII and Arabic-Indic. 166 use both Persian and Arabic-Indic. The three scripts are different code points, so `5`, `۵`, and `٥` do not share a subword until they are folded.
+
+| Letter | Share of reviews |
+| --- | ---: |
+| Persian kaf or ye, `ک` or `ی` | 90.13% |
+| Arabic kaf or ye, `ك`, `ي`, or `ى` | 0.82% |
+| Latin letter | 0.65% |
+
+Of the reviews with a Latin letter, 36,765 also contain an Arabic-script letter and 3,307 do not. The Latin slice is brand names and model codes inside Persian text, not a second corpus. Other scripts are almost absent: Cyrillic 1 review, Hebrew 1, Greek 2, Armenian 1, Han 2, and Hangul 5.
+
+A half-space (ZWNJ, U+200C) appears in 3.15% of reviews. 4,201 reviews have two half-spaces in a row. 33,976 have a half-space at an end or next to a space. One half-space inside a word is part of the Persian spelling. The repeated and edge copies are the ones a cleaner can drop.
+
+Line breaks appear in 9.21% of reviews. A run of two or more ordinary spaces appears in 3.42%. The tab share rounds to 0.00%. A no-break space appears in 234 reviews, a zero-width space in 7, a zero-width joiner in 911, and a byte-order mark in 2. The line breaks, tabs, and repeated spaces are what the whitespace collapse in cleaning removes.
+
+### What this pass changes
+
+1. Fold Arabic-Indic and ASCII digits onto one digit script before tokenization. Persian digits are the largest of the three, and a few thousand reviews mix two scripts.
+2. Map Arabic `ك`, `ي`, and `ى` onto Persian `ک` and `ی`. The Arabic forms are in 0.82% of reviews, enough to split a spelling from the Persian form.
+3. Leave Latin letters as written. They are the brand and model-code slice, and 3,307 reviews have Latin letters with no Arabic-script letter.
+4. Keep emoji. 172 reviews are emoji only once spaces are removed, so deleting emoji deletes those reviews' only text.
+5. Keep one half-space inside a word. Collapse a repeated half-space, and delete a half-space at an end or beside a space. That is 4,201 and 33,976 reviews, not the whole 3.15%.
+6. Keep collapsing line breaks and repeated spaces. Ignore Cyrillic, Hebrew, Greek, Armenian, Han, and Hangul as a preprocessing rule. Together they are 12 reviews.
+
+## 11. TF-IDF baseline for rating bands
+
+`notebooks/04-baseline.ipynb` loads `data/tokenized/digikala-comments-tokenized.parquet` with Polars. The file has 6,152,207 rows. `rate` is mapped to `rating_band` and is not a model feature. Every row in this file falls inside a band: high 4,002,165 (65.05%), low 1,091,653 (17.74%), medium 1,058,389 (17.20%).
+
+The split is grouped by `product_id`, with seed 2026. The shares are 70% train, 15% validation, and 15% test. A product's reviews stay in one split. The notebook printed 0 products in more than one split.
+
+| Split | High | Low | Medium | Rows |
+| --- | ---: | ---: | ---: | ---: |
+| Train | 2,801,508 | 764,155 | 740,859 | 4,306,522 |
+| Validation | 600,325 | 163,751 | 158,765 | 922,841 |
+| Test | 600,332 | 163,747 | 158,765 | 922,844 |
+
+The features are the ParsBERT tokenizer ids of `body`, with the classifier, separator, and pad ids removed. TF-IDF is fit on the training split only, with `min_df=5`. The vocabulary is 34,185 terms. Logistic regression uses balanced class weights, solver `saga`, and `max_iter=200`. `product_id`, `rate`, and `id` are not features.
+
+On the test split the accuracy is 0.6319, the balanced accuracy is 0.5697, the macro F1 is 0.5492, and the ordinal distance error is 0.4866. High is 65% of the rows, so accuracy sits above the balanced accuracy and the macro F1.
+
+| Band | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| Low | 0.4608 | 0.5128 | 0.4854 | 163,747 |
+| Medium | 0.3436 | 0.4959 | 0.4060 | 158,765 |
+| High | 0.8219 | 0.7003 | 0.7562 | 600,332 |
+
+The test confusion matrix has rows actual low, medium, high and columns predicted in that order:
+
+| Actual | Predicted low | Predicted medium | Predicted high |
+| --- | ---: | ---: | ---: |
+| Low | 83,962 | 35,455 | 44,330 |
+| Medium | 33,264 | 78,733 | 46,768 |
+| High | 64,974 | 114,942 | 420,416 |
+
+Validation is nearly the same: accuracy 0.6316, balanced accuracy 0.5705, macro F1 0.5495, ordinal distance error 0.487. The last cell of the notebook writes the fitted vectorizer and classifier to `models/rating-band-tfidf-logreg.joblib`. The `models/` directory is gitignored except `.gitkeep`.

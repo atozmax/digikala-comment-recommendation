@@ -17,7 +17,12 @@ data/processed/*
 !data/processed/.gitkeep
 data/cleaned/*
 !data/cleaned/.gitkeep
+tokenized/*
+!tokenized/.gitkeep
+models/*
+!models/.gitkeep
 *.rar
+*.parquet
 
 artifacts/**
 !artifacts/**/

@@ -11,6 +11,8 @@ import sys
 
 COMMANDS: dict[str, str] = {
     "cleaning": "Clean Digikala review comments and write a CSV.",
+    "preprocess": "Rewrite cleaned review bodies and write a CSV.",
+    "tokenize": "Tokenize preprocessed review bodies and write parquet.",
 }
 
 
@@ -32,6 +34,16 @@ def main(argv: list[str] | None = None) -> None:
         from src.cleaning import main as cleaning_main
 
         cleaning_main(rest)
+        return
+    if command == "preprocess":
+        from src.preprocess import main as preprocess_main
+
+        preprocess_main(rest)
+        return
+    if command == "tokenize":
+        from src.tokenize import main as tokenize_main
+
+        tokenize_main(rest)
         return
     print(f"unknown command: {command}", file=sys.stderr)
     _print_help(file=sys.stderr)

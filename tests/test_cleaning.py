@@ -10,7 +10,7 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
-import pandas as pd
+import polars as pl
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -26,14 +26,15 @@ from src.cleaning import (  # noqa: E402
 )
 
 
-def handmade_frame() -> pd.DataFrame:
-    return pd.DataFrame(
+def handmade_frame() -> pl.DataFrame:
+    return pl.DataFrame(
         [
             {
                 "id": 1,
                 "title": "extra",
                 "body": "عالی",
                 "product_id": 10,
+                "recommendation_status": "recommended",
                 "rate": 5.0,
                 "likes": 3,
             },
@@ -42,6 +43,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": None,
                 "product_id": 11,
+                "recommendation_status": "recommended",
                 "rate": 4.0,
                 "likes": 0,
             },
@@ -50,6 +52,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "کوچک و با کیفیت",
                 "product_id": 5095301,
+                "recommendation_status": "not_recommended",
                 "rate": 2500.0,
                 "likes": 1,
             },
@@ -58,6 +61,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "بد",
                 "product_id": 12,
+                "recommendation_status": "not_recommended",
                 "rate": 0.0,
                 "likes": 0,
             },
@@ -66,6 +70,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "  خوب\r\nبود\t ",
                 "product_id": 13,
+                "recommendation_status": "no_idea",
                 "rate": 3.5,
                 "likes": 0,
             },
@@ -74,6 +79,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "اول",
                 "product_id": 14,
+                "recommendation_status": "recommended",
                 "rate": 4.0,
                 "likes": 0,
             },
@@ -82,6 +88,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "دوم",
                 "product_id": 15,
+                "recommendation_status": "not_recommended",
                 "rate": 1.0,
                 "likes": 0,
             },
@@ -90,6 +97,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "تکرار",
                 "product_id": 16,
+                "recommendation_status": "recommended",
                 "rate": 2.0,
                 "likes": 9,
             },
@@ -98,6 +106,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "تکرار",
                 "product_id": 16,
+                "recommendation_status": "recommended",
                 "rate": 2.0,
                 "likes": 8,
             },
@@ -106,6 +115,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "عالی",
                 "product_id": 17,
+                "recommendation_status": "recommended",
                 "rate": 5.0,
                 "likes": 0,
             },
@@ -114,6 +124,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "نسبی",
                 "product_id": 18,
+                "recommendation_status": "no_idea",
                 "rate": 4.5,
                 "likes": 0,
             },
@@ -122,6 +133,7 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": " \n\t ",
                 "product_id": 19,
+                "recommendation_status": "recommended",
                 "rate": 1.0,
                 "likes": 0,
             },
@@ -130,7 +142,17 @@ def handmade_frame() -> pd.DataFrame:
                 "title": "extra",
                 "body": "منفی",
                 "product_id": 20,
+                "recommendation_status": "recommended",
                 "rate": -0.1,
+                "likes": 0,
+            },
+            {
+                "id": 12,
+                "title": "extra",
+                "body": "بدون برچسب",
+                "product_id": 21,
+                "recommendation_status": None,
+                "rate": 3.0,
                 "likes": 0,
             },
         ]
@@ -140,13 +162,14 @@ def handmade_frame() -> pd.DataFrame:
 class CleanReviewsTest(unittest.TestCase):
     def test_pipeline_matches_the_notebook_rules(self) -> None:
         source = handmade_frame()
-        original = source.copy(deep=True)
+        original = source.clone()
         cleaned, summary = clean_reviews(source)
 
-        pd.testing.assert_frame_equal(source, original)
+        self.assertTrue(source.equals(original))
         self.assertEqual(list(cleaned.columns), list(PROJECT_COLUMNS))
-        self.assertEqual(summary.rows_before, 13)
+        self.assertEqual(summary.rows_before, 14)
         self.assertEqual(summary.dropped_missing_body, 1)
+        self.assertEqual(summary.dropped_missing_recommendation, 1)
         self.assertEqual(summary.dropped_out_of_range_rate, 2)
         self.assertEqual(summary.dropped_empty_body, 1)
         self.assertEqual(summary.dropped_duplicate_ids, 2)
@@ -155,35 +178,41 @@ class CleanReviewsTest(unittest.TestCase):
         self.assertEqual(summary.rows_after, 7)
         self.assertEqual(len(cleaned), 7)
 
-        kept = cleaned.set_index("id")
-        self.assertEqual(set(kept.index), {1, 4, 5, 6, 7, 8, 9})
-        self.assertEqual(kept.loc[4, "rate"], 0.0)
-        self.assertEqual(kept.loc[5, "body"], "خوب بود")
-        self.assertEqual(kept.loc[5, "rate"], 3.5)
-        self.assertEqual(kept.loc[6, "body"], "اول")
-        self.assertEqual(kept.loc[7, "body"], "تکرار")
-        self.assertEqual(kept.loc[9, "rate"], 4.5)
-        self.assertEqual(list(cleaned.loc[cleaned["body"] == "عالی", "id"]), [1, 8])
-        self.assertTrue(((cleaned["rate"] >= 0) & (cleaned["rate"] <= 5)).all())
+        def value(row_id: int, column: str):
+            return cleaned.filter(pl.col("id") == row_id).get_column(column)[0]
+
+        self.assertEqual(set(cleaned.get_column("id").to_list()), {1, 4, 5, 6, 7, 8, 9})
+        self.assertEqual(value(4, "rate"), 0.0)
+        self.assertEqual(value(4, "recommendation_status"), "not_recommended")
+        self.assertEqual(value(5, "body"), "خوب بود")
+        self.assertEqual(value(5, "rate"), 3.5)
+        self.assertEqual(value(6, "body"), "اول")
+        self.assertEqual(value(7, "body"), "تکرار")
+        self.assertEqual(value(9, "rate"), 4.5)
+        self.assertEqual(
+            cleaned.filter(pl.col("body") == "عالی").get_column("id").to_list(),
+            [1, 8],
+        )
+        self.assertEqual(cleaned.filter((pl.col("rate") < 0) | (pl.col("rate") > 5)).height, 0)
 
     def test_full_row_duplicate_drop_keeps_one_copy(self) -> None:
-        frame = pd.DataFrame(
+        frame = pl.DataFrame(
             [
-                {"id": 7, "body": "تکرار", "product_id": 16, "rate": 2.0},
-                {"id": 7, "body": "تکرار", "product_id": 16, "rate": 2.0},
-                {"id": 8, "body": "عالی", "product_id": 17, "rate": 5.0},
+                {"id": 7, "body": "تکرار", "product_id": 16, "recommendation_status": "recommended", "rate": 2.0},
+                {"id": 7, "body": "تکرار", "product_id": 16, "recommendation_status": "recommended", "rate": 2.0},
+                {"id": 8, "body": "عالی", "product_id": 17, "recommendation_status": "recommended", "rate": 5.0},
             ]
         )
         kept, dropped = drop_duplicate_rows(frame)
         self.assertEqual(dropped, 1)
         self.assertEqual(len(kept), 2)
-        self.assertEqual(list(kept["id"]), [7, 8])
+        self.assertEqual(kept.get_column("id").to_list(), [7, 8])
 
 
 class CleanReviewsCliTest(unittest.TestCase):
     def _write_sample(self, directory: Path) -> Path:
         source = directory / "comments.csv"
-        handmade_frame().to_csv(source, index=False)
+        handmade_frame().write_csv(source)
         return source
 
     def test_cli_arguments_choose_the_files(self) -> None:
@@ -192,10 +221,10 @@ class CleanReviewsCliTest(unittest.TestCase):
             source = self._write_sample(folder)
             target = folder / "out" / "cleaned.csv"
             main(["--input", str(source), "--output", str(target)])
-            cleaned = pd.read_csv(target)
+            cleaned = pl.read_csv(target)
             self.assertEqual(len(cleaned), 7)
             self.assertEqual(list(cleaned.columns), list(PROJECT_COLUMNS))
-            self.assertEqual(cleaned.loc[cleaned["id"] == 5, "body"].item(), "خوب بود")
+            self.assertEqual(cleaned.filter(pl.col("id") == 5).get_column("body")[0], "خوب بود")
 
     def test_cli_prints_loading_and_percents(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -207,9 +236,10 @@ class CleanReviewsCliTest(unittest.TestCase):
                 main(["--input", str(source), "--output", str(target)])
             text = stdout.getvalue()
             self.assertIn(f"loading: {source}", text)
-            self.assertIn(f"loaded: {format_count(13, 13)}", text)
-            self.assertIn(f"dropped missing body: {format_count(1, 13)}", text)
-            self.assertIn(f"rows after: {format_count(7, 13)}", text)
+            self.assertIn(f"loaded: {format_count(14, 14)}", text)
+            self.assertIn(f"dropped missing body: {format_count(1, 14)}", text)
+            self.assertIn(f"dropped missing recommendation: {format_count(1, 14)}", text)
+            self.assertIn(f"rows after: {format_count(7, 14)}", text)
 
     def test_env_file_values_are_the_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -230,7 +260,7 @@ class CleanReviewsCliTest(unittest.TestCase):
                         os.environ.pop(key, None)
                     else:
                         os.environ[key] = value
-            cleaned = pd.read_csv(target)
+            cleaned = pl.read_csv(target)
             self.assertEqual(len(cleaned), 7)
 
     def test_package_entry_names_the_cleaning_command(self) -> None:
@@ -246,7 +276,7 @@ class CleanReviewsCliTest(unittest.TestCase):
             source = self._write_sample(folder)
             target = folder / "cleaned.csv"
             package_main(["cleaning", "--input", str(source), "--output", str(target)])
-            cleaned = pd.read_csv(target)
+            cleaned = pl.read_csv(target)
             self.assertEqual(len(cleaned), 7)
 
 
