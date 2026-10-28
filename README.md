@@ -18,3 +18,23 @@ The comments file matches the local audit copy at `data/raw/digikala-comments.cs
 `digikala.rar` on the same page was not copied. It is the packed form of this release. A later run of the notebook skips either CSV when the Drive copy already has the size above.
 
 The Colab machine does not keep these files after the runtime stops. The next session mounts Drive and reads the paths above.
+
+## Clean the comments
+
+From the repository root, with `pandas` and `python-dotenv` installed:
+
+```bash
+python -m src
+```
+
+That reads `data/raw/digikala-comments.csv` and writes `data/cleaned/digikala-comments-cleaned.csv`. The same two paths are in `.env.example`. Copy that file to `.env` to keep them there. `.env` is not committed. `python -m src` loads `.env` first, then uses those paths when you do not pass flags.
+
+Pass either path on the command line to override `.env`:
+
+```bash
+python -m src \
+  --input data/raw/digikala-comments.csv \
+  --output data/cleaned/digikala-comments-cleaned.csv
+```
+
+A flag wins over `.env`, and `.env` wins over the hardcoded defaults. A variable already set in the shell is left as it is. The command prints how many rows each cleaning step drops.
