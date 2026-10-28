@@ -1,1 +1,1 @@
-"""Cleaning helpers for the Digikala review frames."""
+"""Digikala review scripts. Run one with ``python -m src <command>``."""

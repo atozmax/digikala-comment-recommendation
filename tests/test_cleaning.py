@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import io
 import os
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import pandas as pd
@@ -14,10 +16,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.__main__ import main as package_main  # noqa: E402
 from src.cleaning import (  # noqa: E402
     PROJECT_COLUMNS,
     clean_reviews,
     drop_duplicate_rows,
+    format_count,
     main,
 )
 
@@ -193,6 +197,20 @@ class CleanReviewsCliTest(unittest.TestCase):
             self.assertEqual(list(cleaned.columns), list(PROJECT_COLUMNS))
             self.assertEqual(cleaned.loc[cleaned["id"] == 5, "body"].item(), "خوب بود")
 
+    def test_cli_prints_loading_and_percents(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            source = self._write_sample(folder)
+            target = folder / "cleaned.csv"
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                main(["--input", str(source), "--output", str(target)])
+            text = stdout.getvalue()
+            self.assertIn(f"loading: {source}", text)
+            self.assertIn(f"loaded: {format_count(13, 13)}", text)
+            self.assertIn(f"dropped missing body: {format_count(1, 13)}", text)
+            self.assertIn(f"rows after: {format_count(7, 13)}", text)
+
     def test_env_file_values_are_the_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)
@@ -212,6 +230,22 @@ class CleanReviewsCliTest(unittest.TestCase):
                         os.environ.pop(key, None)
                     else:
                         os.environ[key] = value
+            cleaned = pd.read_csv(target)
+            self.assertEqual(len(cleaned), 7)
+
+    def test_package_entry_names_the_cleaning_command(self) -> None:
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            with self.assertRaises(SystemExit) as caught:
+                package_main([])
+        self.assertEqual(caught.exception.code, 2)
+        self.assertIn("cleaning", stderr.getvalue())
+
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            source = self._write_sample(folder)
+            target = folder / "cleaned.csv"
+            package_main(["cleaning", "--input", str(source), "--output", str(target)])
             cleaned = pd.read_csv(target)
             self.assertEqual(len(cleaned), 7)
 

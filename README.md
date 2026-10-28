@@ -19,22 +19,24 @@ The comments file matches the local audit copy at `data/raw/digikala-comments.cs
 
 The Colab machine does not keep these files after the runtime stops. The next session mounts Drive and reads the paths above.
 
-## Clean the comments
+## Commands
 
-From the repository root, with `pandas` and `python-dotenv` installed:
+From the repository root, with `pandas` and `python-dotenv` installed. `python -m src` only lists commands. Name the script you want. Later scripts are added the same way.
+
+Clean the comments:
 
 ```bash
-python -m src
+python -m src cleaning
 ```
 
-That reads `data/raw/digikala-comments.csv` and writes `data/cleaned/digikala-comments-cleaned.csv`. The same two paths are in `.env.example`. Copy that file to `.env` to keep them there. `.env` is not committed. `python -m src` loads `.env` first, then uses those paths when you do not pass flags.
+That reads `data/raw/digikala-comments.csv` and writes `data/cleaned/digikala-comments-cleaned.csv`. The same two paths are in `.env.example`. Copy that file to `.env` to keep them there. `.env` is not committed. The command loads `.env` first, then uses those paths when you do not pass flags.
 
 Pass either path on the command line to override `.env`:
 
 ```bash
-python -m src \
+python -m src cleaning \
   --input data/raw/digikala-comments.csv \
   --output data/cleaned/digikala-comments-cleaned.csv
 ```
 
-A flag wins over `.env`, and `.env` wins over the hardcoded defaults. A variable already set in the shell is left as it is. The command prints how many rows each cleaning step drops.
+A flag wins over `.env`, and `.env` wins over the hardcoded defaults. A variable already set in the shell is left as it is. The command prints the loaded row count and how many rows each cleaning step drops, each with its percent of the loaded rows.

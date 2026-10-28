@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-descriptive-analysis.ipynb`. Every count below comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open.
 
 ## 1. File and parse
 
@@ -82,13 +82,13 @@ Seven columns are complete under this null policy: `id`, `created_at`, `rate`, `
 
 **The text field is usable.** `body` is empty on 637 rows (0.010%). Those rows have no model input and cannot enter training or inference. The other 6,155,652 rows have a body. `title` is empty on 46.54% of rows; the input policy already excludes it, so that gap is not repaired by copying the title into the body.
 
-**The recommendation task has a large labeled set and a natural unlabeled pool.** `recommendation_status` is missing on 894,426 rows (14.53%). Those rows are not supervised examples. The labeled pool is 5,261,863 rows (85.47%). This notebook has not yet counted the classes inside that pool, so imbalance is not claimed here. The missing labels should stay missing: they are not a class to impute.
+**The recommendation task has a large labeled set and a natural unlabeled pool.** `recommendation_status` is missing on 894,426 rows (14.53%). Those rows are not supervised examples. The labeled pool is 5,261,863 rows (85.47%). Section 9 counts the classes inside that pool. The missing labels should stay missing: they are not a class to impute.
 
 **Rating bands are not blocked by null rates.** `rate` has no missing values, so every row can be tested against the band edges (`low` below 2.5, `medium` from 2.5 up to but not including 4, `high` from 4 through 5). A complete column is not the same as a valid one. Section 8 records the range on the four-column frame: minimum 0.0, maximum 2500.0 before the rate filter, and 0.0–5.0 after it.
 
 **Pros, cons, and size-fit are sparse side text.** `advantages` is filled on 11.50% of rows and `disadvantages` on 6.70%. Shoppers who use these fields write a pro more often than a con. `true_to_size_rate` is filled on 1.47% of rows, which fits a size-fit score that applies only to some products. All three columns are outside the model inputs, so their sparsity does not change the feature set.
 
-**Seller fields fail together in the counts.** `seller_title` and `seller_code` each have 302,181 missing values (4.91%). Equal counts are consistent with one seller block being absent on the same rows. A row-level cross-tab is still required before treating that as a fact.
+**Seller fields fail together in the counts.** `seller_title` and `seller_code` each have 302,181 missing values (4.91%). Equal counts are consistent with one seller block being absent on the same rows. Section 9 checks that row by row: those 302,181 rows are exactly the non-buyers, and every buyer has a seller code.
 
 **The frame is already heavy.** The CSV is 1.28 GB on disk and about 1.6 GB once loaded with these dtypes. Schema and null counts fit in one pass. Later full-file work (label vocabulary, text length, reviews per product) should stay on the full parsed file when the column is still present, using chunks or a columnar engine if a second in-memory copy becomes tight. The four-column cleaning in section 8 removes `recommendation_status`, so that label is not on the cleaned frame.
 
@@ -98,12 +98,12 @@ Seven columns are complete under this null policy: `id`, `created_at`, `rate`, `
 2. Drop the **637** rows with an empty `body` from every text model. Do not backfill them from `title`, `advantages`, or `disadvantages`.
 3. Train the recommendation head only on the **5,261,863** rows with a `recommendation_status`. Hold the **894,426** unlabeled rows out of supervised loss. Do not fill that label.
 4. Derive `rating_band` from `rate` only after the section 8 filter. That pass keeps rates in [0, 5], including 0 and fractional values, and removes the single rate of 2500. Null rate is not the failure mode.
-5. Keep `product_id` for grouped splitting. It is complete, which removes null-product rows as a split problem. After the empty-body drop and before the id drop, the notebook counts 331,593 distinct product ids. Reviews per product are still unmeasured, and that distinct count was not printed again after the id drop.
+5. Keep `product_id` for grouped splitting. It is complete, which removes null-product rows as a split problem. After the empty-body drop and before the id drop, the notebook counts 331,593 distinct product ids. Section 9 measures reviews per product on the full raw file, where the distinct count is 331,599.
 6. Leave `title`, seller fields, likes, dislikes, advantages, disadvantages, and `true_to_size_rate` out of the feature vector, matching the input policy. Their missingness is documented so it is not silently “fixed.”
 
 ## 6. Not measured in this notebook
 
-Section 8 records the rate range, the one out-of-range rate, duplicate ids, exact duplicate rows, repeated bodies, and 331,593 distinct `product_id` values before the id drop. The following Part A items are still open. They are absent from `01-descriptive-analysis.ipynb`, so this report does not estimate them:
+Section 8 records the rate range, the one out-of-range rate, duplicate ids, exact duplicate rows, repeated bodies, and 331,593 distinct `product_id` values before the id drop. The following Part A items are still open. They are absent from `notebooks/01-data-cleaning.ipynb`, so this report does not estimate them:
 
 - unique sellers, and the distribution of reviews per product (the distinct product count after the id drop is not printed)
 - identical review text with conflicting `recommendation_status` or `rate` (the recommendation column was removed before the duplicate pass)
@@ -112,7 +112,7 @@ Section 8 records the rate range, the one out-of-range rate, duplicate ids, exac
 - character and word length of `body`, including very short and very long reviews
 - whether missing `recommendation_status` depends on `is_buyer`, `rate`, or product frequency
 
-Those measurements are the next descriptive pass. Class weights, `max_length`, and the grouped split should wait for them.
+Those measurements are in section 9. They come from `notebooks/02-descriptive-analysis.ipynb` on the same raw file. This section does not estimate them from notebook 01.
 
 ## 7. Copy on Google Drive
 
@@ -133,7 +133,7 @@ These two files stay on Drive after the Colab runtime stops. The next session mo
 
 ## 8. Cleaning after the column cut
 
-The same notebook then kept four columns and cleaned those rows. Every count in this section is printed in `notebooks/01-descriptive-analysis.ipynb`.
+The same notebook then kept four columns and cleaned those rows. Every count in this section is printed in `notebooks/01-data-cleaning.ipynb`.
 
 ### Columns and missing bodies
 
@@ -181,3 +181,130 @@ rate range: 0.0 5.0
 Repeated bodies were counted and kept. `df['body'].duplicated().sum()` after the id drop is 2,117,933. That is the number of extra copies under `keep='first'`, not every row that shares a body. Short texts such as «عالی» are real reviews of different products.
 
 The stored drop counts do not add up to the change in shape. The reloaded frame has 6,155,652 rows. The frame after the cleaning cell has 6,152,422. The difference is 3,230, and no cell between the reload and the final `info()` removes rows except this one. The note's 1 out-of-range rate and 3,229 duplicate ids, with 0 empty bodies and 0 full-row duplicates, sum to 3,230. This report takes the size of those drops from the note and from the two shapes. It does not replace the note's 3,229 with the 0 printed in the stored stream. The stream's 2,117,933 repeated bodies, the final shape `(6,152,422, 4)`, and the final rate range 0.0–5.0 are the figures that stream and the following `info()` agree on. Empty bodies after cleanup are 0 in both the stream and the note.
+
+## 9. Second descriptive pass
+
+Every count in this section is printed in `notebooks/02-descriptive-analysis.ipynb`. The notebook scans `data/raw/digikala-comments.csv` with the same missing-value tokens as section 1 and keeps `id`, `body`, `rate`, `recommendation_status`, `is_buyer`, `product_id`, and `seller_code`. No row is sampled. The denominator is the full parsed file, 6,156,289 rows, not the cleaned four-column frame.
+
+Whitespace in `body` is collapsed before length and repeated-text counts. Those counts leave out the 637 bodies that are empty after that collapse, so their denominator is 6,155,652. Rating bands are `low` for 0 ≤ rate < 2.5, `medium` for 2.5 ≤ rate < 4, `high` for 4 ≤ rate ≤ 5, and `invalid` outside that interval. Word length is a split on spaces. It is not an encoder token count.
+
+### Products and sellers
+
+| Item | Value |
+| --- | ---: |
+| Parsed rows | 6,156,289 |
+| Distinct products | 331,599 |
+| Distinct seller codes | 29,213 |
+| Rows with no seller code | 302,181 |
+| Empty bodies after whitespace collapse | 637 |
+| File size | 1,278,526,959 bytes |
+
+The 331,599 products are the raw file. Section 8's 331,593 is the count after the 637 empty bodies were dropped. The six-product gap is that difference in frame, not a second catalog.
+
+`is_buyer` and a missing seller code are the same split. A group count hides empty pairings, so the notebook writes the two zeros explicitly:
+
+| is_buyer | seller missing | rows |
+| --- | --- | ---: |
+| false | false | 0 |
+| false | true | 302,181 |
+| true | false | 5,854,108 |
+| true | true | 0 |
+
+Every review with no seller is a non-buyer. Every review with a seller is a buyer. The file has no buyer without a seller and no non-buyer with one.
+
+Reviews per product are skewed. The median product has 4 reviews. The mean is 18.57. The 75th percentile is 13, the 90th is 46, the 99th is 200, and the maximum is 400. 91,944 products have one review. 18,047 have at least 100.
+
+| Product size | Products | Reviews | Share of reviews |
+| --- | ---: | ---: | ---: |
+| 1 | 91,944 | 91,944 | 1.49% |
+| 2–5 | 106,514 | 322,841 | 5.24% |
+| 6–20 | 73,204 | 788,532 | 12.81% |
+| 21–100 | 42,033 | 1,854,574 | 30.12% |
+| 101 or more | 17,904 | 3,098,398 | 50.33% |
+
+The busiest 1% of products is 3,315 products and holds 667,725 reviews (10.85%). The busiest 10% is 33,159 products and holds 4,132,077 reviews (67.12%). A row-wise split would put many products on both sides of the cut. The split has to be grouped by `product_id`.
+
+### Missing recommendation labels
+
+The 894,426 missing labels are not spread evenly.
+
+| is_buyer | Label missing | Rows | Share of that buyer flag |
+| --- | --- | ---: | ---: |
+| false | yes | 302,181 | 100% |
+| true | no | 5,261,863 | 89.88% |
+| true | yes | 592,245 | 10.12% |
+
+Every non-buyer is unlabeled. Among buyers, 10.12% are unlabeled. The unlabeled pool is the entire non-buyer block plus that buyer slice. 302,181 + 592,245 = 894,426.
+
+By rating band, the missing share is 17.04% of `high` (682,505 of 4,004,905), 10.50% of `medium` (111,207 of 1,059,054), and 9.22% of `low` (100,714 of 1,092,329). The single out-of-range rate is labeled.
+
+By product size, the missing share falls as the product gets more reviews: 20.30% of one-review products, 18.98% of products with 2–5 reviews, 17.20% with 6–20, 15.07% with 21–100, and 12.89% with 101 or more. Missingness is tied to buyer status, score, and product frequency. It is not a class to fill in.
+
+### Recommendation classes and rating bands
+
+| recommendation_status | Rows | Share of all rows | Share of labeled rows |
+| --- | ---: | ---: | ---: |
+| `recommended` | 4,162,839 | 67.62% | 79.11% |
+| missing | 894,426 | 14.53% | — |
+| `no_idea` | 594,121 | 9.65% | 11.29% |
+| `not_recommended` | 504,903 | 8.20% | 9.60% |
+
+Among labeled rows, `recommended` is about eight times `not_recommended`. Accuracy would reward the large class. The recommendation head needs class weights and macro F1.
+
+On the raw file, `rate` runs from 0.0 to 2500.0. The mean is 3.6483, the median is 4.0, and the standard deviation is 1.8619. The 25th percentile is 3.0. There are 178 distinct values. 228,128 rows (3.71%) are not whole numbers. 529,098 rows are exactly 0. One row is outside [0, 5].
+
+| rating_band | Rows | Share of all rows |
+| --- | ---: | ---: |
+| `low` | 1,092,329 | 17.74% |
+| `medium` | 1,059,054 | 17.20% |
+| `high` | 4,004,905 | 65.05% |
+| `invalid` | 1 | 0.00% |
+
+`high` is the majority band. The one invalid rate is the 2500 from section 8, and it sits on a `recommended` row.
+
+The numeric rate tracks the label. Median rate is 4.0 for `recommended`, 4.0 for a missing label, 3.0 for `no_idea`, and 1.0 for `not_recommended`. Means are 3.934, 4.041, 2.923, and 1.448. Inside each labeled class:
+
+| recommendation_status | low | medium | high |
+| --- | ---: | ---: | ---: |
+| `recommended` | 11.12% | 11.82% | 77.06% |
+| `no_idea` | 17.54% | 65.32% | 17.14% |
+| `not_recommended` | 84.06% | 13.44% | 2.50% |
+
+The raw value still should not be a feature. It has 178 levels, including fractions, and a score of 5 is not five times a score of 1. The ordered band is the target.
+
+### Body length
+
+On the 6,155,652 non-empty bodies, character length has minimum 1, median 29, 75th percentile 57, 90th percentile 106, and 95th percentile 152. 827,860 bodies (13.45%) have at most 10 characters. Whitespace words have median 6, 95th percentile 32, 99th percentile 62, and maximum 908. 453,793 bodies (7.37%) are a single word. 1,675,526 (27.22%) have at most three words. 7,527 have at least 128 words, 803 (0.0130%) have at least 256, and 69 have at least 512.
+
+| Words | Bodies | Share of non-empty bodies |
+| --- | ---: | ---: |
+| 1 | 453,793 | 7.37% |
+| 2–3 | 1,221,733 | 19.85% |
+| 4–5 | 1,174,681 | 19.08% |
+| 6–10 | 1,521,668 | 24.72% |
+| 11–20 | 1,083,274 | 17.60% |
+| 21–40 | 521,716 | 8.48% |
+| 41–80 | 149,257 | 2.42% |
+| 81–160 | 25,853 | 0.42% |
+| 161 or more | 3,677 | 0.06% |
+
+Negative reviews are longer. Median words are 10 for `not_recommended`, 8 for `no_idea`, 6 for `recommended`, and 5 for a missing label. The 95th percentile is 45, 38, 28, and 32 words. By band, median words are 8 for `low`, 7 for `medium`, and 5 for `high`.
+
+A 512-token cap cuts a thin tail. The 99th percentile is 62 whitespace words, and 803 bodies reach 256 words. One Persian word can be several encoder tokens, so the token length is longer than this word count. The cap is still far above the body of the distribution.
+
+### Repeated ids and repeated text
+
+On the raw file, 3,226 ids occur more than once. Those ids cover 6,455 rows, so the extra copies are 6,455 − 3,226 = 3,229. That is the same surplus the cleaning note in section 8 records. Of the repeated ids, 43 carry two recommendation values, 79 carry two rates, and 155 carry two bodies.
+
+After whitespace collapse there are 4,034,601 distinct bodies. 193,882 of those strings repeat, and the reviews that use them number 2,314,933. 31,409 repeated strings carry more than one recommendation value (1,609,737 rows). 117,355 carry more than one rate (2,105,785 rows).
+
+The texts that repeat most, and disagree on the label, are short and appear on many products. «عالی» is 134,693 reviews, all three recommendation values, 33 distinct rates, and 60,174 products. «خوب بود», «خوبه», and «خوب» are the next three. A shared body is not one training label. Those rows stay separate.
+
+### Decisions this pass adds
+
+1. Score the recommendation head with macro F1 and class weights. `recommended` is 79.11% of labeled rows and `not_recommended` is 9.60%.
+2. Split by `product_id`. The busiest tenth of products holds 67.12% of reviews.
+3. Keep the 894,426 unlabeled rows out of supervised loss. All 302,181 non-buyers are in that pool, so the gap is structural.
+4. Train `rating_band`, not the raw rate. Keep the single rate of 2500 out of the bands.
+5. A 512-token cap truncates the far tail. The 99th percentile is 62 whitespace words.
+6. Do not merge reviews that share a body. 31,409 repeated texts carry more than one recommendation value.

@@ -1,6 +1,6 @@
 """Clean the four-column Digikala review frame.
 
-The steps follow ``notebooks/01-descriptive-analysis.ipynb``: keep
+The steps follow ``notebooks/01-data-cleaning.ipynb``: keep
 ``id``, ``body``, ``product_id``, and ``rate``; drop missing bodies;
 keep rates in ``[0, 5]``; normalize whitespace; drop empty bodies;
 keep one row per ``id``; drop any remaining full-row duplicates.
@@ -28,7 +28,7 @@ DEFAULT_OUTPUT_CSV = "data/cleaned/digikala-comments-cleaned.csv"
 INPUT_CSV_ENV = "REVIEWS_INPUT_CSV"
 OUTPUT_CSV_ENV = "REVIEWS_OUTPUT_CSV"
 
-# Same missing-value tokens as the descriptive-analysis notebook.
+# Same missing-value tokens as notebooks/01-data-cleaning.ipynb.
 NA_VALUES: list[str] = [
     "",
     "nan",
@@ -201,6 +201,7 @@ def build_parser() -> argparse.ArgumentParser:
     the hardcoded path.
     """
     parser = argparse.ArgumentParser(
+        prog="python -m src cleaning",
         description="Clean Digikala review comments and write a CSV.",
     )
     parser.add_argument(
@@ -222,21 +223,45 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def format_count(count: int, total: int) -> str:
+    """Format a row count with its share of ``total``, as ``12 (34.56%)``.
+
+    ``total`` is the number of rows loaded from the CSV. An empty file
+    prints ``0.00%`` instead of dividing by zero.
+    """
+    share = 0.0 if total == 0 else 100.0 * count / total
+    return f"{count} ({share:.2f}%)"
+
+
 def main(argv: list[str] | None = None) -> None:
-    """Run the cleaning CLI. Paths come from arguments, then ``.env``, then the defaults."""
+    """Run the cleaning CLI. Paths come from arguments, then ``.env``, then the defaults.
+
+    The load is printed before the CSV is read, then again with the
+    loaded row count. Every later count includes its percent of that
+    loaded total.
+    """
     load_project_env()
     args = build_parser().parse_args(argv)
+    print(f"loading: {args.input}", flush=True)
     summary = clean_reviews_file(args.input, args.output)
+    loaded = summary.rows_before
+    print(f"loaded: {format_count(loaded, loaded)}")
     print(f"input: {args.input}")
     print(f"output: {args.output}")
-    print(f"rows before: {summary.rows_before}")
-    print(f"dropped missing body: {summary.dropped_missing_body}")
-    print(f"dropped out-of-range rate: {summary.dropped_out_of_range_rate}")
-    print(f"dropped empty body: {summary.dropped_empty_body}")
-    print(f"dropped duplicate ids: {summary.dropped_duplicate_ids}")
-    print(f"dropped duplicate rows: {summary.dropped_duplicate_rows}")
-    print(f"repeated bodies remaining: {summary.repeated_bodies_remaining}")
-    print(f"rows after: {summary.rows_after}")
+    print(f"rows before: {format_count(summary.rows_before, loaded)}")
+    print(f"dropped missing body: {format_count(summary.dropped_missing_body, loaded)}")
+    print(
+        "dropped out-of-range rate: "
+        f"{format_count(summary.dropped_out_of_range_rate, loaded)}"
+    )
+    print(f"dropped empty body: {format_count(summary.dropped_empty_body, loaded)}")
+    print(f"dropped duplicate ids: {format_count(summary.dropped_duplicate_ids, loaded)}")
+    print(f"dropped duplicate rows: {format_count(summary.dropped_duplicate_rows, loaded)}")
+    print(
+        "repeated bodies remaining: "
+        f"{format_count(summary.repeated_bodies_remaining, loaded)}"
+    )
+    print(f"rows after: {format_count(summary.rows_after, loaded)}")
 
 
 if __name__ == "__main__":
