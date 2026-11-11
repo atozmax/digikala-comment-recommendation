@@ -45,3 +45,5 @@ airflow/webserver_config.py
 .dvc/tmp
 .dvc/config.local
 .DS_Store
+
+mlflow_credentials
