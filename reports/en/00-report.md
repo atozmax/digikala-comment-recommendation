@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks.
 
 ## 1. File and parse
 
@@ -375,3 +375,45 @@ The test confusion matrix has rows actual low, medium, high and columns predicte
 | High | 64,974 | 114,942 | 420,416 |
 
 Validation is nearly the same: accuracy 0.6316, balanced accuracy 0.5705, macro F1 0.5495, ordinal distance error 0.487. The last cell of the notebook writes the fitted vectorizer and classifier to `models/rating-band-tfidf-logreg.joblib`. The `models/` directory is gitignored except `.gitkeep`.
+
+## 12. Recommendation fine-tunes on Colab
+
+The four notebooks under `notebooks/colab/` fine-tune a classifier on `recommendation_status`. The only text field is `body`. The label has three classes: `recommended`, `not_recommended`, and `no_idea`. Each notebook was downloaded from Colab with its cell outputs. The counts below are those printed outputs.
+
+The split is the same in every notebook: 3,680,838 train, 788,750 validation, and 788,754 test. The class counts printed for that split are:
+
+| Split | recommended | not_recommended | no_idea |
+| --- | ---: | ---: | ---: |
+| Train | 2,912,158 | 353,125 | 415,555 |
+| Validation | 624,034 | 75,669 | 89,047 |
+| Test | 624,035 | 75,671 | 89,048 |
+
+Shared training settings are one epoch, maximum length 128, batch size 16, gradient accumulation 2, seed 2026, head learning rate `1e-3`, last-block learning rate `2e-5`, and head learning rate `1e-4` while the last block is unfrozen. The loss is class-weighted cross-entropy. The printed precision, recall, and F1 are macro averages over the three classes. One epoch is 115,027 optimizer steps. Stage 1 trains the new classifier with the encoder frozen. Stage 2 loads that head from Drive and trains the last encoder block. The run with the higher validation macro F1 is copied to `MyDrive/digikala-experiments/best/`.
+
+ParsBERT, XLM-RoBERTa, and TookaBERT each completed both stages. The head cell found local checkpoint `checkpoint-115027`, wrote the head under `runs/`, and the scoring cell printed validation and test. The last-block cell then trained from that head and updated `best/`.
+
+| Model | Stage | Split | Accuracy | Macro precision | Macro recall | Macro F1 |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| ParsBERT | head | validation | 0.7340 | 0.5445 | 0.6389 | 0.5715 |
+| ParsBERT | head | test | 0.7343 | 0.5453 | 0.6407 | 0.5725 |
+| ParsBERT | last block | validation | 0.8004 | 0.6395 | 0.7266 | 0.6687 |
+| ParsBERT | last block | test | 0.8000 | 0.6390 | 0.7263 | 0.6682 |
+| XLM-RoBERTa | head | validation | 0.7135 | 0.5300 | 0.6271 | 0.5540 |
+| XLM-RoBERTa | head | test | 0.7129 | 0.5299 | 0.6277 | 0.5539 |
+| XLM-RoBERTa | last block | validation | 0.7989 | 0.6329 | 0.7205 | 0.6630 |
+| XLM-RoBERTa | last block | test | 0.7993 | 0.6334 | 0.7214 | 0.6637 |
+| TookaBERT | head | validation | 0.7456 | 0.5444 | 0.6310 | 0.5718 |
+| TookaBERT | head | test | 0.7450 | 0.5435 | 0.6301 | 0.5707 |
+| TookaBERT | last block | validation |  |  |  | 0.6722 |
+
+TookaBERT's last-block cell prints `best model updated` with validation macro F1 0.6722. That cell's saved output does not include the validation accuracy line or the test line. The Drive copy of that run is still the one the notebook selected.
+
+| Model | Checkpoint | Head parameters | Last-block parameters | Best directory |
+| --- | --- | ---: | ---: | --- |
+| `HooshvareLab/bert-fa-base-uncased` | `HooshvareLab--bert-fa-base-uncased` | 2,307 | 7,090,179 | `best/HooshvareLab--bert-fa-base-uncased` |
+| `FacebookAI/xlm-roberta-base` | `FacebookAI--xlm-roberta-base` | 592,899 | 7,680,771 | `best/FacebookAI--xlm-roberta-base` |
+| `PartAI/TookaBERT-Base` | `PartAI--TookaBERT-Base` | 2,307 | 7,090,179 | `best/PartAI--TookaBERT-Base` |
+
+Each head directory printed these files: `config.json`, `metrics.json`, `model.safetensors`, `tokenizer.json`, `tokenizer_config.json`. The last-block run is the saved best for all three, because its validation macro F1 is the higher of the two runs. Among those three saved bests, TookaBERT has the highest printed validation macro F1, 0.6722. ParsBERT is 0.6687 and XLM-RoBERTa is 0.6630. On the printed test macro F1, ParsBERT is 0.6682 and XLM-RoBERTa is 0.6637.
+
+`notebooks/colab/04-shiraz-finetune.ipynb` does not contain a finished run. The model is `lifeweb-ai/shiraz`. The train cell loads it, prints 1,539 trainable head parameters, and then raises `TypeError: Trainer.__init__() got an unexpected keyword argument 'tokenizer'`. The save cell raises `NameError: name 'DRIVE_DIR' is not defined`. The score cell and the last-block cell have no output. The MLflow cell raises `FileNotFoundError: No Trainer checkpoint under /content/checkpoints`. No validation metric, test metric, `runs/` path, or `best/` path is printed for Shiraz.
