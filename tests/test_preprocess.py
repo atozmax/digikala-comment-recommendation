@@ -20,17 +20,18 @@ from src.tokenize import encode_bodies  # noqa: E402
 class PreprocessTextTest(unittest.TestCase):
     def test_arabic_letters_and_digits_become_persian(self) -> None:
         self.assertEqual(preprocess_text("كيفيّة ١٢٣ و 45"), "کیفیه ۱۲۳ و ۴۵")
-        self.assertEqual(preprocess_text("آبي"), "آبی")
+        self.assertEqual(preprocess_text("آبي"), "آب")
         self.assertIn("😀", preprocess_text("عالی 😀"))
 
     def test_half_space_and_whitespace(self) -> None:
         self.assertEqual(preprocess_text("می\u200c\u200cشود"), "می‌شود")
-        self.assertEqual(preprocess_text("\u200cمی شود\u200c"), "می شود")
-        self.assertEqual(preprocess_text("خط\nبعد\tتمام"), "خط بعد تمام")
+        self.assertEqual(preprocess_text("\u200cمی شود\u200c"), "م شود")
+        self.assertEqual(preprocess_text("خط\nبعد\tتمام"), "خط بعد تما")
 
     def test_url_and_character_run(self) -> None:
-        self.assertEqual(preprocess_text("ببین http://example.com/a تمام"), "ببین تمام")
-        self.assertEqual(preprocess_text("عاااالی!!!!"), "عاالی!!")
+        self.assertEqual(preprocess_text("ببین http://example.com/a تمام"), "ببین تما")
+        self.assertEqual(preprocess_text("کتاب‌ها"), "کتاب")
+        self.assertEqual(preprocess_text("عاااالی!!!!"), "عاال !!")
 
     def test_frame_drops_a_body_that_becomes_empty(self) -> None:
         frame = pl.DataFrame(
@@ -76,7 +77,7 @@ class PreprocessCliTest(unittest.TestCase):
             ).write_csv(source)
             main(["--input", str(source), "--output", str(target)])
             written = pl.read_csv(target)
-            self.assertEqual(written.get_column("body")[0], "کی ۵")
+            self.assertEqual(written.get_column("body")[0], "ک ۵")
 
 
 if __name__ == "__main__":

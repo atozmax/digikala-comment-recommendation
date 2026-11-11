@@ -14,10 +14,10 @@ in ``notebooks/02-descriptive-analysis.ipynb``:
 - replace a URL or email with a space
 - cap a run of three identical characters at two
 - collapse whitespace again
+- Hazm word tokenization, then Hazm stemming
 
-Emoji stay. Latin letters stay. Stemming and lemmatization stay out:
-a Hazm lemma such as ``رفت#رو`` is not the surface word in the
-tokenizer vocabulary, and it erases polarity.
+Emoji stay. Latin letters stay. Hazm's lemmatizer is not applied:
+it rewrites a verb as ``نوشت#نویس``, which is not a surface word.
 """
 
 from __future__ import annotations
@@ -80,6 +80,9 @@ _CHAR_RUN = re.compile(r"(.)\1{2,}")
 _LINE_BREAKS = re.compile(r"[\r\n\t]+")
 _SPACES = re.compile(r"\s+")
 
+_word_tokenizer = None
+_stemmer = None
+
 
 @dataclass(frozen=True)
 class PreprocessSummary:
@@ -91,8 +94,79 @@ class PreprocessSummary:
     dropped_empty_body: int
 
 
+def _load_light_hazm() -> None:
+    """Import Hazm's stemmer without running ``hazm/__init__.py``.
+
+    That file imports the POS tagger, which needs ``pycrfsuite``, and the
+    embedding modules, which need gensim and fasttext. Stemming only
+    needs ``hazm.utils``, ``hazm.stemmer``, and ``hazm.word_tokenizer``.
+    """
+    import importlib
+    import sys
+    import types
+    from importlib.util import find_spec
+
+    existing = sys.modules.get("hazm")
+    if existing is not None and hasattr(existing, "default_words"):
+        return
+    # A failed ``import hazm`` leaves a module whose ``__spec__`` is None.
+    # find_spec() then raises instead of searching the install path.
+    for name in list(sys.modules):
+        if name == "hazm" or name.startswith("hazm."):
+            del sys.modules[name]
+    spec = find_spec("hazm")
+    if spec is None or not spec.submodule_search_locations:
+        raise ModuleNotFoundError(
+            "hazm is not installed. Run: "
+            "pip install nltk flashtext && pip install hazm --no-deps"
+        )
+    package = types.ModuleType("hazm")
+    package.__path__ = list(spec.submodule_search_locations)
+    package.__package__ = "hazm"
+    package.__file__ = str(Path(package.__path__[0]) / "__init__.py")
+    package.__spec__ = spec
+    sys.modules["hazm"] = package
+    utils = importlib.import_module("hazm.utils")
+    for name in ("abbreviations", "default_verbs", "default_words", "words_list"):
+        setattr(package, name, getattr(utils, name))
+
+
+def _hazm_tools():
+    """Load Hazm's word tokenizer and stemmer once.
+
+    ``separate_emoji`` keeps an emoji as its own token. Numbers, links,
+    and emails are left alone because this pass already folded digits
+    and removed URLs.
+    """
+    global _word_tokenizer, _stemmer
+    if _stemmer is None:
+        _load_light_hazm()
+        from hazm.stemmer import Stemmer
+        from hazm.word_tokenizer import WordTokenizer
+
+        _stemmer = Stemmer()
+        _word_tokenizer = WordTokenizer(
+            join_verb_parts=True,
+            separate_emoji=True,
+            replace_links=False,
+            replace_emails=False,
+            replace_numbers=False,
+            replace_ids=False,
+            replace_hashtags=False,
+        )
+    return _word_tokenizer, _stemmer
+
+
+def stem_text(text: str) -> str:
+    """Tokenize one normalized body with Hazm and stem each token."""
+    if not text:
+        return ""
+    tokenizer, stemmer = _hazm_tools()
+    return " ".join(stemmer.stem(token) for token in tokenizer.tokenize(text))
+
+
 def preprocess_text(text: str) -> str:
-    """Return one review body after the character pass. Emoji and Latin stay."""
+    """Return one review body after the character pass and Hazm stemming."""
     if not isinstance(text, str):
         return ""
     out = unicodedata.normalize("NFKC", text)
@@ -108,7 +182,7 @@ def preprocess_text(text: str) -> str:
     out = _LINE_BREAKS.sub(" ", out)
     out = _SPACES.sub(" ", out).strip()
     out = _EDGE_ZWNJ.sub("", out)
-    return out.strip()
+    return stem_text(out.strip())
 
 
 def _rewrite_batch(batch: pl.Series) -> pl.Series:
