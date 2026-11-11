@@ -380,6 +380,16 @@ Validation is nearly the same: accuracy 0.6316, balanced accuracy 0.5705, macro 
 
 The four notebooks under `notebooks/colab/` fine-tune a classifier on `recommendation_status`. The only text field is `body`. The label has three classes: `recommended`, `not_recommended`, and `no_idea`. Each notebook was downloaded from Colab with its cell outputs. The counts below are those printed outputs.
 
+The saved Drive folders for the three finished accounts are:
+
+| Notebook | Drive folder |
+| --- | --- |
+| `notebooks/colab/01-parsbert-finetune.ipynb` | https://drive.google.com/drive/folders/1GKqsgeXT8uFFLYddJDnA9509bIiDHosd?usp=sharing |
+| `notebooks/colab/02-xlmr-finetune.ipynb` | https://drive.google.com/drive/folders/1AEtn221vAuEW3yAzgQ6-JSeJd0-keHpm?usp=sharing |
+| `notebooks/colab/03-tookabert-finetune.ipynb` | https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing |
+
+Each folder contains `best/`, `logs/`, and `runs/`. The small files from those folders are copied under `artifacts/colab/`, with the file list in `artifacts/colab/manifest.json` and the links in `artifacts/colab/drive-links.json`. `model.safetensors` and `tokenizer.json` stayed on Drive. TookaBERT's `logs/` folder is empty. Shiraz has no shared folder here.
+
 The split is the same in every notebook: 3,680,838 train, 788,750 validation, and 788,754 test. The class counts printed for that split are:
 
 | Split | recommended | not_recommended | no_idea |
@@ -404,9 +414,9 @@ ParsBERT, XLM-RoBERTa, and TookaBERT each completed both stages. The head cell f
 | XLM-RoBERTa | last block | test | 0.7993 | 0.6334 | 0.7214 | 0.6637 |
 | TookaBERT | head | validation | 0.7456 | 0.5444 | 0.6310 | 0.5718 |
 | TookaBERT | head | test | 0.7450 | 0.5435 | 0.6301 | 0.5707 |
-| TookaBERT | last block | validation |  |  |  | 0.6722 |
+| TookaBERT | last block | validation | 0.8053 | 0.6420 | 0.7289 | 0.6722 |
 
-TookaBERT's last-block cell prints `best model updated` with validation macro F1 0.6722. That cell's saved output does not include the validation accuracy line or the test line. The Drive copy of that run is still the one the notebook selected.
+TookaBERT's notebook prints only `best model updated` and validation macro F1 0.6722 for the last block. The Drive file `runs/PartAI--TookaBERT-Base--last_block/metrics.json` is that same validation pass: accuracy 0.8053, macro precision 0.6420, macro recall 0.7289, macro F1 0.6722. That folder has no `test_metrics.json`. The file `best/PartAI--TookaBERT-Base/test_metrics.json` is still the head test, with `"stage": "head"` and macro F1 0.5707, the same numbers the score cell printed.
 
 | Model | Checkpoint | Head parameters | Last-block parameters | Best directory |
 | --- | --- | ---: | ---: | --- |
@@ -414,6 +424,18 @@ TookaBERT's last-block cell prints `best model updated` with validation macro F1
 | `FacebookAI/xlm-roberta-base` | `FacebookAI--xlm-roberta-base` | 592,899 | 7,680,771 | `best/FacebookAI--xlm-roberta-base` |
 | `PartAI/TookaBERT-Base` | `PartAI--TookaBERT-Base` | 2,307 | 7,090,179 | `best/PartAI--TookaBERT-Base` |
 
-Each head directory printed these files: `config.json`, `metrics.json`, `model.safetensors`, `tokenizer.json`, `tokenizer_config.json`. The last-block run is the saved best for all three, because its validation macro F1 is the higher of the two runs. Among those three saved bests, TookaBERT has the highest printed validation macro F1, 0.6722. ParsBERT is 0.6687 and XLM-RoBERTa is 0.6630. On the printed test macro F1, ParsBERT is 0.6682 and XLM-RoBERTa is 0.6637.
+Each head directory on Drive contains `config.json`, `metrics.json`, `model.safetensors`, `tokenizer.json`, and `tokenizer_config.json`. The last-block run is the saved best for all three, because its validation macro F1 is the higher of the two runs. Among those three, TookaBERT has the highest validation macro F1, 0.6722, and the highest validation accuracy, 0.8053. ParsBERT is 0.6687 and 0.8004. XLM-RoBERTa is 0.6630 and 0.7989. On the test files whose stage is `last_block`, ParsBERT macro F1 is 0.6682 and XLM-RoBERTa is 0.6637.
+
+The per-class F1 in those Drive metrics files:
+
+| Model | Split | Stage | recommended | not_recommended | no_idea |
+| --- | --- | --- | ---: | ---: | ---: |
+| ParsBERT | validation | last block | 0.8947 | 0.6902 | 0.4211 |
+| ParsBERT | test | last block | 0.8944 | 0.6881 | 0.4221 |
+| XLM-RoBERTa | validation | last block | 0.8943 | 0.6824 | 0.4123 |
+| XLM-RoBERTa | test | last block | 0.8944 | 0.6815 | 0.4151 |
+| TookaBERT | validation | last block | 0.8983 | 0.6969 | 0.4214 |
+
+`recommended` is near 0.90 F1. `no_idea` stays near 0.42. ParsBERT's log also records the head epoch before the save crash: validation accuracy 0.7340, macro F1 0.5715, eval loss 0.6765, train loss 1.6569. The XLM-RoBERTa and TookaBERT head `metrics.json` files say `saved after the scoring crash` and contain no scores. Their head scores are the ones printed in the notebooks.
 
 `notebooks/colab/04-shiraz-finetune.ipynb` does not contain a finished run. The model is `lifeweb-ai/shiraz`. The train cell loads it, prints 1,539 trainable head parameters, and then raises `TypeError: Trainer.__init__() got an unexpected keyword argument 'tokenizer'`. The save cell raises `NameError: name 'DRIVE_DIR' is not defined`. The score cell and the last-block cell have no output. The MLflow cell raises `FileNotFoundError: No Trainer checkpoint under /content/checkpoints`. No validation metric, test metric, `runs/` path, or `best/` path is printed for Shiraz.

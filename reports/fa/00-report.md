@@ -404,6 +404,16 @@ rate range: 0.0 5.0
 
 چهار دفترچه زیر `notebooks/colab/` یک طبقه‌بند روی `recommendation_status` تنظیم می‌کنند. تنها متن ورودی `body` است. برچسب سه کلاس دارد: `recommended`، `not_recommended`، و `no_idea`. هر دفترچه با خروجی سلول‌ها از کولب دانلود شده است. شمارش‌های زیر همان خروجی چاپ‌شده است.
 
+پوشه‌های درایو برای سه حسابی که آموزش را تمام کردند:
+
+| دفترچه | پوشه درایو |
+| --- | --- |
+| `notebooks/colab/01-parsbert-finetune.ipynb` | https://drive.google.com/drive/folders/1GKqsgeXT8uFFLYddJDnA9509bIiDHosd?usp=sharing |
+| `notebooks/colab/02-xlmr-finetune.ipynb` | https://drive.google.com/drive/folders/1AEtn221vAuEW3yAzgQ6-JSeJd0-keHpm?usp=sharing |
+| `notebooks/colab/03-tookabert-finetune.ipynb` | https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing |
+
+هر پوشه `best/` و `logs/` و `runs/` دارد. فایل‌های کوچک این پوشه‌ها زیر `artifacts/colab/` کپی شده‌اند. فهرست فایل‌ها در `artifacts/colab/manifest.json` است و پیوندها در `artifacts/colab/drive-links.json`. `model.safetensors` و `tokenizer.json` روی درایو ماندند. پوشه `logs/` برای TookaBERT خالی است. شیراز پوشه مشترکی در این فهرست ندارد.
+
 تقسیم در هر چهار دفترچه یکی است: 3,680,838 آموزش، 788,750 اعتبارسنجی، و 788,754 آزمون. شمارش کلاس‌ها که برای این تقسیم چاپ شده این است:
 
 | تقسیم | recommended | not_recommended | no_idea |
@@ -428,9 +438,9 @@ ParsBERT و XLM-RoBERTa و TookaBERT هر دو مرحله را تمام کردن
 | XLM-RoBERTa | بلوک آخر | آزمون | 0.7993 | 0.6334 | 0.7214 | 0.6637 |
 | TookaBERT | سر | اعتبارسنجی | 0.7456 | 0.5444 | 0.6310 | 0.5718 |
 | TookaBERT | سر | آزمون | 0.7450 | 0.5435 | 0.6301 | 0.5707 |
-| TookaBERT | بلوک آخر | اعتبارسنجی |  |  |  | 0.6722 |
+| TookaBERT | بلوک آخر | اعتبارسنجی | 0.8053 | 0.6420 | 0.7289 | 0.6722 |
 
-سلول بلوک آخر TookaBERT عبارت `best model updated` را با macro F1 اعتبارسنجی 0.6722 چاپ می‌کند. خروجی ذخیره‌شده این سلول خط دقت اعتبارسنجی و خط آزمون را ندارد. نسخه درایو همان اجرایی است که دفترچه انتخاب کرده است.
+دفترچه TookaBERT برای بلوک آخر فقط `best model updated` و macro F1 اعتبارسنجی 0.6722 را چاپ می‌کند. فایل درایو `runs/PartAI--TookaBERT-Base--last_block/metrics.json` همان اعتبارسنجی است: دقت 0.8053، macro precision برابر 0.6420، macro recall برابر 0.7289، و macro F1 برابر 0.6722. این پوشه `test_metrics.json` ندارد. فایل `best/PartAI--TookaBERT-Base/test_metrics.json` هنوز آزمون سر است، با `"stage": "head"` و macro F1 برابر 0.5707، همان عددهایی که سلول امتیاز چاپ کرده است.
 
 | مدل | ایست بازرسی | پارامترهای سر | پارامترهای بلوک آخر | پوشه best |
 | --- | --- | ---: | ---: | --- |
@@ -438,6 +448,18 @@ ParsBERT و XLM-RoBERTa و TookaBERT هر دو مرحله را تمام کردن
 | `FacebookAI/xlm-roberta-base` | `FacebookAI--xlm-roberta-base` | 592,899 | 7,680,771 | `best/FacebookAI--xlm-roberta-base` |
 | `PartAI/TookaBERT-Base` | `PartAI--TookaBERT-Base` | 2,307 | 7,090,179 | `best/PartAI--TookaBERT-Base` |
 
-هر پوشه سر این فایل‌ها را چاپ کرده است: `config.json`، `metrics.json`، `model.safetensors`، `tokenizer.json`، `tokenizer_config.json`. اجرای بلوک آخر برای هر سه مدل نسخه best است، چون macro F1 اعتبارسنجی آن از دو اجرا بالاتر است. بین این سه نسخه ذخیره‌شده، TookaBERT بالاترین macro F1 اعتبارسنجی چاپ‌شده را دارد: 0.6722. ParsBERT برابر 0.6687 و XLM-RoBERTa برابر 0.6630 است. روی macro F1 آزمون چاپ‌شده، ParsBERT برابر 0.6682 و XLM-RoBERTa برابر 0.6637 است.
+هر پوشه سر روی درایو این فایل‌ها را دارد: `config.json`، `metrics.json`، `model.safetensors`، `tokenizer.json`، و `tokenizer_config.json`. اجرای بلوک آخر برای هر سه مدل نسخه best است، چون macro F1 اعتبارسنجی آن از دو اجرا بالاتر است. بین این سه، TookaBERT بالاترین macro F1 اعتبارسنجی را دارد، 0.6722، و بالاترین دقت اعتبارسنجی را هم دارد، 0.8053. ParsBERT برابر 0.6687 و 0.8004 است. XLM-RoBERTa برابر 0.6630 و 0.7989 است. روی فایل‌های آزمونی که مرحله‌شان `last_block` است، macro F1 برای ParsBERT برابر 0.6682 و برای XLM-RoBERTa برابر 0.6637 است.
+
+F1 هر کلاس در همین فایل‌های سنجه درایو:
+
+| مدل | تقسیم | مرحله | recommended | not_recommended | no_idea |
+| --- | --- | --- | ---: | ---: | ---: |
+| ParsBERT | اعتبارسنجی | بلوک آخر | 0.8947 | 0.6902 | 0.4211 |
+| ParsBERT | آزمون | بلوک آخر | 0.8944 | 0.6881 | 0.4221 |
+| XLM-RoBERTa | اعتبارسنجی | بلوک آخر | 0.8943 | 0.6824 | 0.4123 |
+| XLM-RoBERTa | آزمون | بلوک آخر | 0.8944 | 0.6815 | 0.4151 |
+| TookaBERT | اعتبارسنجی | بلوک آخر | 0.8983 | 0.6969 | 0.4214 |
+
+F1 کلاس `recommended` نزدیک 0.90 است. `no_idea` نزدیک 0.42 می‌ماند. لاگ ParsBERT دور سر را پیش از خطای ذخیره ثبت کرده است: دقت اعتبارسنجی 0.7340، macro F1 برابر 0.5715، زیان ارزیابی 0.6765، و زیان آموزش 1.6569. فایل `metrics.json` سر برای XLM-RoBERTa و TookaBERT فقط می‌گوید `saved after the scoring crash` و سنجه‌ای ندارد. سنجه سر آن دو همان عددهای چاپ‌شده در دفترچه است.
 
 `notebooks/colab/04-shiraz-finetune.ipynb` هیچ اجرای تمام‌شده‌ای ندارد. مدل `lifeweb-ai/shiraz` است. سلول آموزش آن را بار می‌کند، 1,539 پارامتر آموزش‌پذیر سر را چاپ می‌کند، و سپس `TypeError: Trainer.__init__() got an unexpected keyword argument 'tokenizer'` می‌دهد. سلول ذخیره `NameError: name 'DRIVE_DIR' is not defined` می‌دهد. سلول امتیاز و سلول بلوک آخر خروجی ندارند. سلول MLflow خطای `FileNotFoundError: No Trainer checkpoint under /content/checkpoints` می‌دهد. برای شیراز هیچ سنجه اعتبارسنجی، سنجه آزمون، مسیر `runs/`، یا مسیر `best/` چاپ نشده است.
