@@ -33,3 +33,14 @@
 | TookaBERT | 0.8053 | 0.6722 | 0.8983 | 0.6969 | 0.4214 |
 
 اولین ادامه TookaBERT است. بین سه مدل ذخیره‌شده بالاترین دقت اعتبارسنجی و بالاترین macro F1 اعتبارسنجی را دارد. ParsBERT و XLM-RoBERTa در مسیرهای بالا برای همین نوع اجرا می‌مانند. پوشه `best/` برای TookaBERT هنوز `test_metrics.json` بلوک آخر را ندارد؛ فایل آزمون آن سنجه سر قبلی است.
+
+## اجراهای ۱۰٪ جای این وزن‌ها را نمی‌گیرند
+
+در ۲۱ آبان ۱۴۰۵ (۱۲ نوامبر ۲۰۲۶) دفترچه‌های چهار بلوک بالا در `notebooks/colab3/` روی یک برش تصادفی ۱۰٪ تمام شدند. پوشه‌های درایو آن‌ها جدا از جدول بالا است. بخش ۱۳ در `reports/fa/00-report.md` سنجه‌ها را ثبت کرده است. اجرای بعدی روی داده کامل همچنان پوشه‌های `best/` جدول بالا را بار می‌کند.
+
+| دفترچه | پوشه درایو | پوشه نگه‌داشته |
+| --- | --- | --- |
+| `notebooks/colab3/01-tookabert-top4.ipynb` | https://drive.google.com/drive/folders/1eSvV-_vO_Pgygj34poKD8ZmJfiO5w6tI?usp=sharing | `best/PartAI--TookaBERT-Base--top4_sample10` |
+| `notebooks/colab3/02-parsbert-top4.ipynb` | https://drive.google.com/drive/folders/1uewUGcYTCkjs0UC4JH9IB2GOZvzIjdd2?usp=sharing | `best/HooshvareLab--bert-fa-base-uncased--top4_sample10` |
+
+همان پوشه درایو TookaBERT حالا سنجه مدل منتشرشده از `notebooks/colab3/05-hooshvare-digikala-sentiment.ipynb` را هم دارد، در `runs/HooshvareLab--bert-fa-base-uncased-sentiment-digikala/test_metrics.json`. این فایل سنجه همه نظرهای برچسب‌دار است. ایست بازرسی آموزش نیست. بخش ۱۴ در `reports/fa/00-report.md` آن را ثبت کرده است. پیوند پوشه https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing است.

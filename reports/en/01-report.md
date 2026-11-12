@@ -33,3 +33,14 @@ Validation of the weights being loaded:
 | TookaBERT | 0.8053 | 0.6722 | 0.8983 | 0.6969 | 0.4214 |
 
 TookaBERT is the first continuation. It has the highest validation accuracy and the highest validation macro F1 of the three saved models. ParsBERT and XLM-RoBERTa stay available at the paths above for the same kind of run. TookaBERT's `best/` folder still has no last-block `test_metrics.json`; its test file is the earlier head score.
+
+## The 10% runs do not replace these weights
+
+On 21 Aban 1405 (12 November 2026) the top-four notebooks in `notebooks/colab3/` finished on a random 10% slice. Their Drive folders are separate from the table above. Section 13 of `reports/en/00-report.md` records the scores. A later full-data run still loads the `best/` directories in the table above.
+
+| Notebook | Drive folder | Kept directory |
+| --- | --- | --- |
+| `notebooks/colab3/01-tookabert-top4.ipynb` | https://drive.google.com/drive/folders/1eSvV-_vO_Pgygj34poKD8ZmJfiO5w6tI?usp=sharing | `best/PartAI--TookaBERT-Base--top4_sample10` |
+| `notebooks/colab3/02-parsbert-top4.ipynb` | https://drive.google.com/drive/folders/1uewUGcYTCkjs0UC4JH9IB2GOZvzIjdd2?usp=sharing | `best/HooshvareLab--bert-fa-base-uncased--top4_sample10` |
+
+The same TookaBERT Drive folder now also holds the published-model score from `notebooks/colab3/05-hooshvare-digikala-sentiment.ipynb`, at `runs/HooshvareLab--bert-fa-base-uncased-sentiment-digikala/test_metrics.json`. That file is a score of every labeled review. It is not a training checkpoint. Section 14 of `reports/en/00-report.md` records it. The folder link is https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing.

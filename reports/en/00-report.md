@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review.
 
 ## 1. File and parse
 
@@ -439,3 +439,60 @@ The per-class F1 in those Drive metrics files:
 `recommended` is near 0.90 F1. `no_idea` stays near 0.42. ParsBERT's log also records the head epoch before the save crash: validation accuracy 0.7340, macro F1 0.5715, eval loss 0.6765, train loss 1.6569. The XLM-RoBERTa and TookaBERT head `metrics.json` files say `saved after the scoring crash` and contain no scores. Their head scores are the ones printed in the notebooks.
 
 `notebooks/colab/04-shiraz-finetune.ipynb` does not contain a finished run. The model is `lifeweb-ai/shiraz`. The train cell loads it, prints 1,539 trainable head parameters, and then raises `TypeError: Trainer.__init__() got an unexpected keyword argument 'tokenizer'`. The save cell raises `NameError: name 'DRIVE_DIR' is not defined`. The score cell and the last-block cell have no output. The MLflow cell raises `FileNotFoundError: No Trainer checkpoint under /content/checkpoints`. No validation metric, test metric, `runs/` path, or `best/` path is printed for Shiraz.
+
+## 13. Top four blocks on a 10% slice
+
+`notebooks/colab3/01-tookabert-top4.ipynb` and `notebooks/colab3/02-parsbert-top4.ipynb` were downloaded from Colab with their cell outputs. Each run starts from the section 12 `best/` weights, unfreezes blocks 8–11, and trains on a random 10% of the labeled reviews. The draw uses seed 2026. Both notebooks print the same slice: 525,834 kept out of 5,258,342, then 368,082 train, 78,874 validation, and 78,878 test.
+
+| Split | recommended | not_recommended | no_idea |
+| --- | ---: | ---: | ---: |
+| Train | 291,060 | 35,582 | 41,440 |
+| Validation | 62,370 | 7,624 | 8,880 |
+| Test | 62,371 | 7,626 | 8,881 |
+
+Shared settings match section 12 except the slice and the blocks: maximum length 128, batch size 16, gradient accumulation 2, block learning rate `2e-5`, classifier learning rate `1e-4`, class-weighted cross-entropy, and macro precision, recall, and F1. Both notebooks print 28,353,795 trainable parameters. The scores below are on this slice. They are not a new measurement of the full test set in section 12.
+
+The saved Drive folders are:
+
+| Notebook | Drive folder |
+| --- | --- |
+| `notebooks/colab3/01-tookabert-top4.ipynb` | https://drive.google.com/drive/folders/1eSvV-_vO_Pgygj34poKD8ZmJfiO5w6tI?usp=sharing |
+| `notebooks/colab3/02-parsbert-top4.ipynb` | https://drive.google.com/drive/folders/1uewUGcYTCkjs0UC4JH9IB2GOZvzIjdd2?usp=sharing |
+
+Each folder contains `best/`, `logs/`, and `runs/`. The small files are under `artifacts/colab/sample10/`, with `artifacts/colab/sample10/manifest.json` and `artifacts/colab/sample10/drive-links.json`. `model.safetensors` and `tokenizer.json` stayed on Drive. The links are also appended in `artifacts/colab/drive-links.json`.
+
+TookaBERT keeps epoch 2. ParsBERT keeps epoch 1. Later epochs in the log have a lower validation macro F1, so `best/` was not replaced. TookaBERT's log has no epoch 3: the second extra pass is numbered 4. The epoch 5 validation line repeats the epoch 4 scores exactly. ParsBERT's epoch 4 line repeats epoch 2, and epoch 5 repeats epoch 3. The kept files are the epochs named below.
+
+| Model | Kept epoch | Split | Accuracy | Macro precision | Macro recall | Macro F1 |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| TookaBERT | 2 | validation | 0.8155 | 0.6546 | 0.7334 | 0.6825 |
+| TookaBERT | 2 | test | 0.8173 | 0.6595 | 0.7365 | 0.6867 |
+| ParsBERT | 1 | validation | 0.8095 | 0.6494 | 0.7321 | 0.6778 |
+| ParsBERT | 1 | test | 0.8109 | 0.6530 | 0.7359 | 0.6816 |
+
+Per-class F1 in those `best/` files:
+
+| Model | Split | recommended | not_recommended | no_idea |
+| --- | --- | ---: | ---: | ---: |
+| TookaBERT | validation | 0.9058 | 0.7014 | 0.4401 |
+| TookaBERT | test | 0.9062 | 0.7131 | 0.4409 |
+| ParsBERT | validation | 0.9013 | 0.6972 | 0.4348 |
+| ParsBERT | test | 0.9013 | 0.7064 | 0.4370 |
+
+On this slice, TookaBERT's kept test macro F1 is 0.6867 and ParsBERT's is 0.6816. `recommended` stays near 0.90 F1. `no_idea` stays near 0.44. The saved directories are `best/PartAI--TookaBERT-Base--top4_sample10` and `best/HooshvareLab--bert-fa-base-uncased--top4_sample10`.
+
+## 14. Published ParsBERT sentiment on every labeled review
+
+`notebooks/colab3/05-hooshvare-digikala-sentiment.ipynb` was downloaded from Colab with its cell outputs. It does not train. It loads `HooshvareLab/bert-fa-base-uncased-sentiment-digikala` and scores every labeled review in the preprocessed CSV. The cell prints 5,258,342 labeled reviews out of 5,258,342 rows in that file: 4,160,227 `recommended`, 504,465 `not_recommended`, and 593,650 `no_idea`. The model's own index order, printed in the notebook, is `no_idea=0`, `not_recommended=1`, `recommended=2`. The metrics use this project's order. The printed precision, recall, and F1 are macro averages.
+
+The score file is in the TookaBERT Drive folder, which is the same folder as `notebooks/colab/03-tookabert-finetune.ipynb`:
+
+https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing
+
+The file is `runs/HooshvareLab--bert-fa-base-uncased-sentiment-digikala/test_metrics.json`. The name says test, and the JSON says `"split": "labeled"` and `"rows": 5258342`. A copy of that file and the matching log are under `artifacts/colab/tookabert/`. The link is also in `artifacts/colab/drive-links.json`. No weight file was saved for this run.
+
+| Model | Rows | Accuracy | Macro precision | Macro recall | Macro F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `HooshvareLab/bert-fa-base-uncased-sentiment-digikala` | 5,258,342 | 0.7403 | 0.5668 | 0.6544 | 0.5918 |
+
+Per-class F1 in that file: `recommended` 0.8558, `not_recommended` 0.6052, `no_idea` 0.3144. The model card's accuracy 0.8268 and F1 0.8172 are on the 62,321-comment set's own test split, not on these 5,258,342 reviews.

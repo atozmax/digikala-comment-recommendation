@@ -26,7 +26,7 @@ pandas،
 
 `DataFrame.isnull().sum()`.
 
- هیچ سطری نمونه‌برداری نشده است. بخش ۹ گذر دوم را ثبت می‌کند، از `notebooks/02-descriptive-analysis.ipynb`، و همان موردهایی را می‌سنجد که بخش ۶ باز گذاشته بود. بخش ۱۰ گذر نویسه‌ها را در همان دفترچه ثبت می‌کند: رقم، حرف، ایموجی، نیم‌فاصله، و فاصله درون `body` خام. بخش ۱۱ خط پایه TF-IDF و رگرسیون لجستیک را در `notebooks/04-baseline.ipynb` ثبت می‌کند. بخش ۱۲ تنظیم دقیق پیشنهاد را در چهار دفترچه کولب ثبت می‌کند.
+ هیچ سطری نمونه‌برداری نشده است. بخش ۹ گذر دوم را ثبت می‌کند، از `notebooks/02-descriptive-analysis.ipynb`، و همان موردهایی را می‌سنجد که بخش ۶ باز گذاشته بود. بخش ۱۰ گذر نویسه‌ها را در همان دفترچه ثبت می‌کند: رقم، حرف، ایموجی، نیم‌فاصله، و فاصله درون `body` خام. بخش ۱۱ خط پایه TF-IDF و رگرسیون لجستیک را در `notebooks/04-baseline.ipynb` ثبت می‌کند. بخش ۱۲ تنظیم دقیق پیشنهاد را در چهار دفترچه کولب ثبت می‌کند. بخش ۱۳ اجراهای چهار بلوک بالا روی ۱۰٪ داده را در `notebooks/colab3/` ثبت می‌کند. بخش ۱۴ مدل احساس منتشرشده ParsBERT را روی همه نظرهای برچسب‌دار ثبت می‌کند.
 
 ## ۱. فایل و تجزیه
 
@@ -463,3 +463,60 @@ F1 هر کلاس در همین فایل‌های سنجه درایو:
 F1 کلاس `recommended` نزدیک 0.90 است. `no_idea` نزدیک 0.42 می‌ماند. لاگ ParsBERT دور سر را پیش از خطای ذخیره ثبت کرده است: دقت اعتبارسنجی 0.7340، macro F1 برابر 0.5715، زیان ارزیابی 0.6765، و زیان آموزش 1.6569. فایل `metrics.json` سر برای XLM-RoBERTa و TookaBERT فقط می‌گوید `saved after the scoring crash` و سنجه‌ای ندارد. سنجه سر آن دو همان عددهای چاپ‌شده در دفترچه است.
 
 `notebooks/colab/04-shiraz-finetune.ipynb` هیچ اجرای تمام‌شده‌ای ندارد. مدل `lifeweb-ai/shiraz` است. سلول آموزش آن را بار می‌کند، 1,539 پارامتر آموزش‌پذیر سر را چاپ می‌کند، و سپس `TypeError: Trainer.__init__() got an unexpected keyword argument 'tokenizer'` می‌دهد. سلول ذخیره `NameError: name 'DRIVE_DIR' is not defined` می‌دهد. سلول امتیاز و سلول بلوک آخر خروجی ندارند. سلول MLflow خطای `FileNotFoundError: No Trainer checkpoint under /content/checkpoints` می‌دهد. برای شیراز هیچ سنجه اعتبارسنجی، سنجه آزمون، مسیر `runs/`، یا مسیر `best/` چاپ نشده است.
+
+## ۱۳. چهار بلوک بالا روی برش ۱۰ درصدی
+
+`notebooks/colab3/01-tookabert-top4.ipynb` و `notebooks/colab3/02-parsbert-top4.ipynb` با خروجی سلول‌ها از کولب دانلود شده‌اند. هر اجرا از وزن `best/` در بخش ۱۲ شروع می‌شود، بلوک‌های ۸ تا ۱۱ را باز می‌کند، و روی ۱۰٪ تصادفی از نظرهای برچسب‌دار آموزش می‌بیند. قرعه بذر ۲۰۲۶ است. هر دو دفترچه همان برش را چاپ می‌کنند: ۵۲۵٬۸۳۴ ردیف از ۵٬۲۵۸٬۳۴۲، سپس ۳۶۸٬۰۸۲ آموزش، ۷۸٬۸۷۴ اعتبارسنجی، و ۷۸٬۸۷۸ آزمون.
+
+| تقسیم | recommended | not_recommended | no_idea |
+| --- | ---: | ---: | ---: |
+| آموزش | 291,060 | 35,582 | 41,440 |
+| اعتبارسنجی | 62,370 | 7,624 | 8,880 |
+| آزمون | 62,371 | 7,626 | 8,881 |
+
+تنظیم‌ها همان بخش ۱۲ است، جز برش و بلوک‌ها: طول بیشینه ۱۲۸، اندازه دسته ۱۶، انباشت گرادیان ۲، نرخ یادگیری بلوک `2e-5`، نرخ یادگیری طبقه‌بند `1e-4`، آنتروپی متقاطع با وزن کلاس، و دقت و بازخوانی و F1 از نوع macro. هر دو دفترچه ۲۸٬۳۵۳٬۷۹۵ پارامتر آموزش‌پذیر را چاپ می‌کنند. سنجه‌های زیر روی همین برش است. سنجش تازه‌ای از مجموعه آزمون کامل بخش ۱۲ نیست.
+
+پوشه‌های درایو ذخیره‌شده:
+
+| دفترچه | پوشه درایو |
+| --- | --- |
+| `notebooks/colab3/01-tookabert-top4.ipynb` | https://drive.google.com/drive/folders/1eSvV-_vO_Pgygj34poKD8ZmJfiO5w6tI?usp=sharing |
+| `notebooks/colab3/02-parsbert-top4.ipynb` | https://drive.google.com/drive/folders/1uewUGcYTCkjs0UC4JH9IB2GOZvzIjdd2?usp=sharing |
+
+هر پوشه `best/` و `logs/` و `runs/` دارد. فایل‌های کوچک زیر `artifacts/colab/sample10/` هستند، با `artifacts/colab/sample10/manifest.json` و `artifacts/colab/sample10/drive-links.json`. `model.safetensors` و `tokenizer.json` روی درایو ماندند. پیوندها به `artifacts/colab/drive-links.json` هم اضافه شده‌اند.
+
+TookaBERT دور ۲ را نگه می‌دارد. ParsBERT دور ۱ را نگه می‌دارد. دورهای بعدی در لاگ macro F1 اعتبارسنجی پایین‌تری دارند، پس `best/` عوض نشده است. لاگ TookaBERT دور ۳ ندارد: گذر اضافه دوم با شماره ۴ ثبت شده است. خط اعتبارسنجی دور ۵ همان سنجه دور ۴ را تکرار می‌کند. در ParsBERT خط دور ۴ تکرار دور ۲ است و خط دور ۵ تکرار دور ۳. فایل‌های نگه‌داشته‌شده همان دورهایی هستند که پایین نام برده شده‌اند.
+
+| مدل | دور نگه‌داشته | تقسیم | دقت | Macro precision | Macro recall | Macro F1 |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| TookaBERT | 2 | اعتبارسنجی | 0.8155 | 0.6546 | 0.7334 | 0.6825 |
+| TookaBERT | 2 | آزمون | 0.8173 | 0.6595 | 0.7365 | 0.6867 |
+| ParsBERT | 1 | اعتبارسنجی | 0.8095 | 0.6494 | 0.7321 | 0.6778 |
+| ParsBERT | 1 | آزمون | 0.8109 | 0.6530 | 0.7359 | 0.6816 |
+
+F1 هر کلاس در همین فایل‌های `best/`:
+
+| مدل | تقسیم | recommended | not_recommended | no_idea |
+| --- | --- | ---: | ---: | ---: |
+| TookaBERT | اعتبارسنجی | 0.9058 | 0.7014 | 0.4401 |
+| TookaBERT | آزمون | 0.9062 | 0.7131 | 0.4409 |
+| ParsBERT | اعتبارسنجی | 0.9013 | 0.6972 | 0.4348 |
+| ParsBERT | آزمون | 0.9013 | 0.7064 | 0.4370 |
+
+روی این برش، macro F1 آزمون TookaBERT برابر 0.6867 و ParsBERT برابر 0.6816 است. F1 کلاس `recommended` نزدیک 0.90 می‌ماند. `no_idea` نزدیک 0.44 می‌ماند. پوشه‌های ذخیره‌شده `best/PartAI--TookaBERT-Base--top4_sample10` و `best/HooshvareLab--bert-fa-base-uncased--top4_sample10` هستند.
+
+## ۱۴. مدل احساس منتشرشده ParsBERT روی همه نظرهای برچسب‌دار
+
+`notebooks/colab3/05-hooshvare-digikala-sentiment.ipynb` با خروجی سلول‌ها از کولب دانلود شده است. آموزش نمی‌دهد. مدل `HooshvareLab/bert-fa-base-uncased-sentiment-digikala` را بار می‌کند و همه نظرهای برچسب‌دار CSV پیش‌پردازش‌شده را می‌سنجد. سلول ۵٬۲۵۸٬۳۴۲ نظر برچسب‌دار از ۵٬۲۵۸٬۳۴۲ ردیف همان فایل را چاپ می‌کند: ۴٬۱۶۰٬۲۲۷ `recommended`، ۵۰۴٬۴۶۵ `not_recommended`، و ۵۹۳٬۶۵۰ `no_idea`. ترتیب شاخص خود مدل، که در دفترچه چاپ شده، `no_idea=0`، `not_recommended=1`، و `recommended=2` است. سنجه‌ها با ترتیب این پروژه حساب شده‌اند. دقت، بازخوانی، و F1 چاپ‌شده میانگین macro است.
+
+فایل سنجه در پوشه درایو TookaBERT است، همان پوشه `notebooks/colab/03-tookabert-finetune.ipynb`:
+
+https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing
+
+فایل `runs/HooshvareLab--bert-fa-base-uncased-sentiment-digikala/test_metrics.json` است. نام فایل آزمون است، و JSON مقدار `"split": "labeled"` و `"rows": 5258342` دارد. یک کپی از این فایل و لاگ متناظر زیر `artifacts/colab/tookabert/` است. پیوند در `artifacts/colab/drive-links.json` هم هست. برای این اجرا فایل وزن ذخیره نشده است.
+
+| مدل | ردیف | دقت | Macro precision | Macro recall | Macro F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `HooshvareLab/bert-fa-base-uncased-sentiment-digikala` | 5,258,342 | 0.7403 | 0.5668 | 0.6544 | 0.5918 |
+
+F1 هر کلاس در همین فایل: `recommended` برابر 0.8558، `not_recommended` برابر 0.6052، و `no_idea` برابر 0.3144. دقت 0.8268 و F1 برابر 0.8172 در کارت مدل روی آزمون مجموعه ۶۲٬۳۲۱ نظری خود آن مدل است، نه روی این ۵٬۲۵۸٬۳۴۲ نظر.
