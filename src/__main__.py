@@ -13,6 +13,7 @@ COMMANDS: dict[str, str] = {
     "cleaning": "Clean Digikala review comments and write a CSV.",
     "preprocess": "Rewrite cleaned review bodies and write a CSV.",
     "tokenize": "Tokenize preprocessed review bodies and write parquet.",
+    "tookabert-v2": "Download, preprocess, train, and score TookaBERT on this machine.",
 }
 
 
@@ -44,6 +45,11 @@ def main(argv: list[str] | None = None) -> None:
         from src.tokenize import main as tokenize_main
 
         tokenize_main(rest)
+        return
+    if command == "tookabert-v2":
+        from src.experiments.tookabert_v2 import main as tookabert_main
+
+        tookabert_main(rest)
         return
     print(f"unknown command: {command}", file=sys.stderr)
     _print_help(file=sys.stderr)
