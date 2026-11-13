@@ -145,4 +145,31 @@ The custom term is `no_idea_wrong_mass` in that file. For one batch it keeps onl
 
 class-weighted cross-entropy + 1.0 × that mean.
 
-The class weights are unchanged from the earlier run. The new score files include `confusion_matrix`, with the true label on the rows and the prediction on the columns. Accuracy and F1 for this run are not in this note yet.
+The class weights are unchanged from the earlier run. The new score files include `confusion_matrix`, with the true label on the rows and the prediction on the columns.
+
+Epoch 1 finished at 13:42 UTC on 13 November 2026. Files: `experiments/tookabert-noidea-penalty-2026-11-13/epoch-1/heldout_metrics.json` and `metrics.json`.
+
+| Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Held-out 80% | 4,206,508 | 0.7946 | 0.6776 | 0.7946 |
+| Full labeled set | 5,258,135 | 0.7972 | 0.6828 | 0.7972 |
+
+Held-out per-class scores:
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| recommended | 0.9676 | 0.8247 | 0.8904 | 3,328,040 |
+| not_recommended | 0.7250 | 0.6748 | 0.6990 | 403,562 |
+| no_idea | 0.3276 | 0.6859 | 0.4434 | 474,906 |
+
+Full-set per-class F1: recommended 0.8913 (support 4,160,050), not_recommended 0.7074 (support 504,452), no_idea 0.4496 (support 593,633). Full-set precision and recall are 0.9684 / 0.8256 for recommended, 0.7335 / 0.6832 for not_recommended, and 0.3323 / 0.6951 for no_idea. The last logged training loss, averaged over steps 32,801–32,850, is 1.6898.
+
+Held-out confusion counts, from `confusion_matrix`:
+
+| True label | Predicted recommended | Predicted not_recommended | Predicted no_idea |
+| --- | ---: | ---: | ---: |
+| recommended | 2,744,577 | 34,476 | 548,987 |
+| not_recommended | 11,548 | 272,333 | 119,681 |
+| no_idea | 80,319 | 68,836 | 325,751 |
+
+The two `no_idea` mistakes are 80,319 predicted `recommended` and 68,836 predicted `not_recommended`, 149,155 together. On the source epoch 2 those two mistakes added up to 207,422, with the split unknown. True `recommended` predicted `no_idea` is 548,987. Held-out macro F1 0.6776 is 0.0196 below the source epoch 2. The same command now continues with epochs 2 and 3 from this epoch's weights. Those epochs are not scored yet.

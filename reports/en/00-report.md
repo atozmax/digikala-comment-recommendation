@@ -535,4 +535,14 @@ The loss is the same class-weighted cross-entropy as section 15, plus one extra 
 
 class-weighted cross-entropy + mean wrong-class probability on true `no_idea` rows.
 
-The score files for this run store the 3 by 3 counts, with rows as the true label and columns as the prediction. This section has no accuracy or F1 yet.
+The score files store the 3 by 3 counts, rows as the true label and columns as the prediction. Epoch 1 of this run was scored on 13 November 2026. Held-out accuracy is 0.7946 and macro F1 is 0.6776. Full-set accuracy is 0.7972 and macro F1 is 0.6828. Held-out macro F1 is 0.0196 below the source epoch 2. Held-out `no_idea` recall rose from 0.5632 to 0.6859, and its F1 is 0.4434. The last logged training loss, over steps 32,801–32,850, is 1.6898.
+
+Held-out confusion counts:
+
+| True label | Predicted recommended | Predicted not_recommended | Predicted no_idea |
+| --- | ---: | ---: | ---: |
+| recommended | 2,744,577 | 34,476 | 548,987 |
+| not_recommended | 11,548 | 272,333 | 119,681 |
+| no_idea | 80,319 | 68,836 | 325,751 |
+
+True `no_idea` predicted as `recommended` is 80,319, and predicted as `not_recommended` is 68,836. Together that is 149,155 misses, down from 207,422 on the source epoch 2. True `recommended` predicted as `no_idea` is 548,987. The same command now trains epochs 2 and 3 from these weights when epoch 1 is already saved. Those epochs have no scores yet.
