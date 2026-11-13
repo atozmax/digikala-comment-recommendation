@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run, two epochs on a stratified 20% sample.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 4 are scored.
 
 ## 1. File and parse
 
@@ -499,13 +499,28 @@ Per-class F1 in that file: `recommended` 0.8558, `not_recommended` 0.6052, `no_i
 
 ## 15. TookaBERT preprocessing v2 on the GPU server
 
-On 21 Aban 1405 (12 November 2026) `src/experiments/tookabert_v2.py` trained `PartAI/TookaBERT-Base` from `best/PartAI--TookaBERT-Base` on the GPU server. The top four blocks were trainable. The training text is a stratified 20% of the labeled rows, seed 2026, after the letter, digit, and emoji stages in `plans/new-experiments-plan.md`. The held-out 80% never entered training. The full labeled set includes the training rows. Copies of the score files are under `experiments/tookabert-preproc-v2-2026-11-12/`. The run kept epoch 2.
+On 21 Aban 1405 (12 November 2026) `src/experiments/tookabert_v2.py` trained `PartAI/TookaBERT-Base` from `best/PartAI--TookaBERT-Base` on the GPU server. The top four blocks were trainable. The training text is a stratified 20% of the labeled rows, seed 2026, after the letter, digit, and emoji stages in `plans/new-experiments-plan.md`. The held-out 80% never entered training. The full labeled set includes the training rows. Copies of the score files are under `experiments/tookabert-preproc-v2-2026-11-12/`.
+
+Every epoch trains on the same 1,051,627 reviews. The counts are from `sample/config.json`.
+
+| Class | Labeled rows | Training rows |
+| --- | ---: | ---: |
+| recommended | 4,160,050 | 832,010 |
+| not_recommended | 504,452 | 100,890 |
+| no_idea | 593,633 | 118,727 |
+| Total | 5,258,135 | 1,051,627 |
+
+The held-out 80% is 4,206,508 rows. The first completion wrote `kept.json` with epoch 2. Epochs 3 and 4 were trained from the previous epoch's weights. Epoch 4 held-out macro F1 is 0.6881. Among the four scored epochs, epoch 2 still has the highest held-out macro F1. Epoch 5 started at 01:35 UTC on 13 November 2026 and stopped before the first training step, so epochs 5, 6, and 7 have no scores.
 
 | Epoch | Split | Rows | Accuracy | Macro F1 | Micro F1 |
 | --- | ---: | --- | ---: | ---: | ---: |
 | 1 | held-out 80% | 4,206,508 | 0.8305 | 0.6965 | 0.8305 |
 | 2 | held-out 80% | 4,206,508 | 0.8312 | 0.6972 | 0.8312 |
+| 3 | held-out 80% | 4,206,508 | 0.8289 | 0.6927 | 0.8289 |
+| 4 | held-out 80% | 4,206,508 | 0.8270 | 0.6881 | 0.8270 |
 | 1 | full labeled set | 5,258,135 | 0.8314 | 0.6983 | 0.8314 |
 | 2 | full labeled set | 5,258,135 | 0.8330 | 0.7010 | 0.8330 |
+| 3 | full labeled set | 5,258,135 | 0.8315 | 0.6981 | 0.8315 |
+| 4 | full labeled set | 5,258,135 | 0.8301 | 0.6944 | 0.8301 |
 
-Held-out per-class F1, epoch 1 then epoch 2: recommended 0.9154 then 0.9160, not_recommended 0.7221 then 0.7217, no_idea 0.4521 then 0.4538. The score files do not contain a loss. The last logged training loss is 1.0810 for epoch 1 and 1.0954 for epoch 2. The 20% training rows have no separate classification score.
+Held-out per-class F1, epochs 1 through 4: recommended 0.9154, 0.9160, 0.9153, 0.9147; not_recommended 0.7221, 0.7217, 0.7133, 0.7048; no_idea 0.4521, 0.4538, 0.4495, 0.4448. The score files do not contain a loss. The last logged training loss is 1.0810 for epoch 1, 1.0954 for epoch 2, 1.1615 for epoch 3, and 1.2423 for epoch 4. The 20% training rows have no separate classification score.

@@ -49,6 +49,17 @@ The same TookaBERT Drive folder now also holds the published-model score from `n
 
 On 21 Aban 1405 (12 November 2026) `src/experiments/tookabert_v2.py` finished epoch 1 on the GPU server. The run is `experiments/tookabert-preproc-v2-2026-11-12`. It trained the top four blocks of `PartAI/TookaBERT-Base` on a stratified 20% of the labeled rows, seed 2026. The held-out 80% is the validation set that decides a second epoch. The score files have accuracy, macro F1, micro F1, and per-class precision, recall, and F1. They do not record a loss.
 
+Every epoch trains on the same 1,051,627 reviews. The counts are from `sample/config.json`.
+
+| Class | Labeled rows | Training rows |
+| --- | ---: | ---: |
+| recommended | 4,160,050 | 832,010 |
+| not_recommended | 504,452 | 100,890 |
+| no_idea | 593,633 | 118,727 |
+| Total | 5,258,135 | 1,051,627 |
+
+The held-out 80% is 4,206,508 rows.
+
 Held-out 80%, 4,206,508 rows, from `epoch-1/heldout_metrics.json`:
 
 | | Accuracy | Macro F1 | Micro F1 |
@@ -85,3 +96,41 @@ Held-out per-class F1:
 | no_idea | 0.4521 | 0.4538 | 474,906 |
 
 Full-set per-class F1: recommended 0.9158 then 0.9167 (support 4,160,050), not_recommended 0.7243 then 0.7269 (support 504,452), no_idea 0.4549 then 0.4593 (support 593,633). Epoch 2 held-out precision and recall are 0.9600 / 0.8759 for recommended, 0.6732 / 0.7779 for not_recommended, and 0.3800 / 0.5632 for no_idea. The held-out macro F1 gain from epoch 1 to epoch 2 is 0.0006. `no_idea` remains the weak class.
+
+## TookaBERT preprocessing v2, epoch 3
+
+Epoch 3 resumed from the saved epoch 2 weights on the same 20% training rows. Weights were saved at 23:20 UTC on 12 November 2026. The held-out score was written at 23:37 UTC and the full-set score at 23:59 UTC. Files: `epoch-3/heldout_metrics.json` and `epoch-3/metrics.json`. Epoch 4 training had started when these numbers were copied.
+
+| Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Epoch 3 held-out 80% | 4,206,508 | 0.8289 | 0.6927 | 0.8289 |
+| Epoch 3 full labeled set | 5,258,135 | 0.8315 | 0.6981 | 0.8315 |
+
+Held-out per-class scores, from `epoch-3/heldout_metrics.json`:
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| recommended | 0.9594 | 0.8750 | 0.9153 | 3,328,040 |
+| not_recommended | 0.6690 | 0.7640 | 0.7133 | 403,562 |
+| no_idea | 0.3750 | 0.5609 | 0.4495 | 474,906 |
+
+Full-set per-class F1: recommended 0.9162 (support 4,160,050), not_recommended 0.7209 (support 504,452), no_idea 0.4572 (support 593,633). Full-set precision and recall are 0.9602 / 0.8759 for recommended, 0.6761 / 0.7721 for not_recommended, and 0.3815 / 0.5702 for no_idea. Held-out macro F1 is 0.0045 below epoch 2. The last logged training loss, averaged over steps 32,801–32,850, is 1.1615. The score files have no loss. Among epochs 1, 2, and 3, epoch 2 still has the highest held-out macro F1.
+
+## TookaBERT preprocessing v2, epoch 4
+
+Epoch 4 resumed from the saved epoch 3 weights on the same 20% training rows. The held-out score was written at 01:14 UTC on 13 November 2026 (22 Aban 1405) and the full-set score at 01:35 UTC. Files: `epoch-4/heldout_metrics.json` and `epoch-4/metrics.json`. Epoch 5 then stopped before the first training step, so it has no score file.
+
+| Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Epoch 4 held-out 80% | 4,206,508 | 0.8270 | 0.6881 | 0.8270 |
+| Epoch 4 full labeled set | 5,258,135 | 0.8301 | 0.6944 | 0.8301 |
+
+Held-out per-class scores, from `epoch-4/heldout_metrics.json`:
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| recommended | 0.9583 | 0.8749 | 0.9147 | 3,328,040 |
+| not_recommended | 0.6622 | 0.7531 | 0.7048 | 403,562 |
+| no_idea | 0.3713 | 0.5544 | 0.4448 | 474,906 |
+
+Full-set per-class F1: recommended 0.9158 (support 4,160,050), not_recommended 0.7134 (support 504,452), no_idea 0.4539 (support 593,633). Full-set precision and recall are 0.9593 / 0.8761 for recommended, 0.6705 / 0.7623 for not_recommended, and 0.3791 / 0.5655 for no_idea. Held-out macro F1 is 0.0091 below epoch 2 and 0.0046 below epoch 3. The last logged training loss, averaged over steps 32,801–32,850, is 1.2423. The score files have no loss. Among epochs 1 through 4, epoch 2 still has the highest held-out macro F1.
