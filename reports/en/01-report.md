@@ -44,3 +44,44 @@ On 21 Aban 1405 (12 November 2026) the top-four notebooks in `notebooks/colab3/`
 | `notebooks/colab3/02-parsbert-top4.ipynb` | https://drive.google.com/drive/folders/1uewUGcYTCkjs0UC4JH9IB2GOZvzIjdd2?usp=sharing | `best/HooshvareLab--bert-fa-base-uncased--top4_sample10` |
 
 The same TookaBERT Drive folder now also holds the published-model score from `notebooks/colab3/05-hooshvare-digikala-sentiment.ipynb`, at `runs/HooshvareLab--bert-fa-base-uncased-sentiment-digikala/test_metrics.json`. That file is a score of every labeled review. It is not a training checkpoint. Section 14 of `reports/en/00-report.md` records it. The folder link is https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing.
+
+## TookaBERT preprocessing v2, epoch 1
+
+On 21 Aban 1405 (12 November 2026) `src/experiments/tookabert_v2.py` finished epoch 1 on the GPU server. The run is `experiments/tookabert-preproc-v2-2026-11-12`. It trained the top four blocks of `PartAI/TookaBERT-Base` on a stratified 20% of the labeled rows, seed 2026. The held-out 80% is the validation set that decides a second epoch. The score files have accuracy, macro F1, micro F1, and per-class precision, recall, and F1. They do not record a loss.
+
+Held-out 80%, 4,206,508 rows, from `epoch-1/heldout_metrics.json`:
+
+| | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: |
+| Held-out 80% | 0.8305 | 0.6965 | 0.8305 |
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| recommended | 0.9599 | 0.8748 | 0.9154 | 3,328,040 |
+| not_recommended | 0.6691 | 0.7843 | 0.7221 | 403,562 |
+| no_idea | 0.3793 | 0.5595 | 0.4521 | 474,906 |
+
+The full labeled set, 5,258,135 rows, is in `epoch-1/metrics.json`. Accuracy 0.8314, macro F1 0.6983, micro F1 0.8314. Per-class F1 is 0.9158 for recommended (support 4,160,050), 0.7243 for not_recommended (support 504,452), and 0.4549 for no_idea (support 593,633).
+
+Held-out macro F1 0.6965 is above the saved full-data validation 0.6722, so epoch 2 trained and was scored. The run finished at 21:47 UTC and wrote `kept.json` with epoch 2, because its held-out macro F1 is the higher of the two. The score files still have no loss. The last logged training loss, averaged over steps 32,801–32,850, is 1.0810 for epoch 1 and 1.0954 for epoch 2. The 20% training rows were not scored as their own classification set.
+
+## TookaBERT preprocessing v2, epoch 2
+
+Epoch 2 used the same 20% training rows and the same held-out 80%. Files: `epoch-2/heldout_metrics.json` and `epoch-2/metrics.json`.
+
+| Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Epoch 1 held-out 80% | 4,206,508 | 0.8305 | 0.6965 | 0.8305 |
+| Epoch 2 held-out 80% | 4,206,508 | 0.8312 | 0.6972 | 0.8312 |
+| Epoch 1 full labeled set | 5,258,135 | 0.8314 | 0.6983 | 0.8314 |
+| Epoch 2 full labeled set | 5,258,135 | 0.8330 | 0.7010 | 0.8330 |
+
+Held-out per-class F1:
+
+| Class | Epoch 1 | Epoch 2 | Support |
+| --- | ---: | ---: | ---: |
+| recommended | 0.9154 | 0.9160 | 3,328,040 |
+| not_recommended | 0.7221 | 0.7217 | 403,562 |
+| no_idea | 0.4521 | 0.4538 | 474,906 |
+
+Full-set per-class F1: recommended 0.9158 then 0.9167 (support 4,160,050), not_recommended 0.7243 then 0.7269 (support 504,452), no_idea 0.4549 then 0.4593 (support 593,633). Epoch 2 held-out precision and recall are 0.9600 / 0.8759 for recommended, 0.6732 / 0.7779 for not_recommended, and 0.3800 / 0.5632 for no_idea. The held-out macro F1 gain from epoch 1 to epoch 2 is 0.0006. `no_idea` remains the weak class.

@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run, two epochs on a stratified 20% sample.
 
 ## 1. File and parse
 
@@ -496,3 +496,16 @@ The file is `runs/HooshvareLab--bert-fa-base-uncased-sentiment-digikala/test_met
 | `HooshvareLab/bert-fa-base-uncased-sentiment-digikala` | 5,258,342 | 0.7403 | 0.5668 | 0.6544 | 0.5918 |
 
 Per-class F1 in that file: `recommended` 0.8558, `not_recommended` 0.6052, `no_idea` 0.3144. The model card's accuracy 0.8268 and F1 0.8172 are on the 62,321-comment set's own test split, not on these 5,258,342 reviews.
+
+## 15. TookaBERT preprocessing v2 on the GPU server
+
+On 21 Aban 1405 (12 November 2026) `src/experiments/tookabert_v2.py` trained `PartAI/TookaBERT-Base` from `best/PartAI--TookaBERT-Base` on the GPU server. The top four blocks were trainable. The training text is a stratified 20% of the labeled rows, seed 2026, after the letter, digit, and emoji stages in `plans/new-experiments-plan.md`. The held-out 80% never entered training. The full labeled set includes the training rows. Copies of the score files are under `experiments/tookabert-preproc-v2-2026-11-12/`. The run kept epoch 2.
+
+| Epoch | Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | --- | ---: | ---: | ---: |
+| 1 | held-out 80% | 4,206,508 | 0.8305 | 0.6965 | 0.8305 |
+| 2 | held-out 80% | 4,206,508 | 0.8312 | 0.6972 | 0.8312 |
+| 1 | full labeled set | 5,258,135 | 0.8314 | 0.6983 | 0.8314 |
+| 2 | full labeled set | 5,258,135 | 0.8330 | 0.7010 | 0.8330 |
+
+Held-out per-class F1, epoch 1 then epoch 2: recommended 0.9154 then 0.9160, not_recommended 0.7221 then 0.7217, no_idea 0.4521 then 0.4538. The score files do not contain a loss. The last logged training loss is 1.0810 for epoch 1 and 1.0954 for epoch 2. The 20% training rows have no separate classification score.
