@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 4 are scored.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 4 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows.
 
 ## 1. File and parse
 
@@ -524,3 +524,15 @@ The held-out 80% is 4,206,508 rows. The first completion wrote `kept.json` with 
 | 4 | full labeled set | 5,258,135 | 0.8301 | 0.6944 | 0.8301 |
 
 Held-out per-class F1, epochs 1 through 4: recommended 0.9154, 0.9160, 0.9153, 0.9147; not_recommended 0.7221, 0.7217, 0.7133, 0.7048; no_idea 0.4521, 0.4538, 0.4495, 0.4448. The score files do not contain a loss. The last logged training loss is 1.0810 for epoch 1, 1.0954 for epoch 2, 1.1615 for epoch 3, and 1.2423 for epoch 4. The 20% training rows have no separate classification score.
+
+## 16. TookaBERT epoch 2 with a no_idea penalty
+
+On 22 Aban 1405 (13 November 2026) `src/experiments/tookabert_noidea_penalty.py` starts from the epoch 2 weights in section 15. Epoch 2 has the highest held-out macro F1 of the four scored epochs, 0.6972. The run trains one further epoch on the same 1,051,627 reviews and writes `experiments/tookabert-noidea-penalty-2026-11-13`. It does not change `experiments/tookabert-preproc-v2-2026-11-12`.
+
+From epoch 2's held-out scores, recall 0.5632 and support 474,906 give 267,484 correct `no_idea` predictions and 207,422 misses. Each of those misses was predicted `recommended` or `not_recommended`. The score file does not store the split between those two predictions.
+
+The loss is the same class-weighted cross-entropy as section 15, plus one extra term. On a batch, the penalty is the mean of `p(recommended) + p(not_recommended)` over rows whose true label is `no_idea`. That sum is `1 - p(no_idea)`. Rows with another true label do not enter the penalty. A batch with no `no_idea` row adds 0. The coefficient in the code is `NO_IDEA_WRONG_PENALTY = 1.0`, so the training loss is
+
+class-weighted cross-entropy + mean wrong-class probability on true `no_idea` rows.
+
+The score files for this run store the 3 by 3 counts, with rows as the true label and columns as the prediction. This section has no accuracy or F1 yet.

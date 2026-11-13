@@ -134,3 +134,15 @@ Held-out per-class scores, from `epoch-4/heldout_metrics.json`:
 | no_idea | 0.3713 | 0.5544 | 0.4448 | 474,906 |
 
 Full-set per-class F1: recommended 0.9158 (support 4,160,050), not_recommended 0.7134 (support 504,452), no_idea 0.4539 (support 593,633). Full-set precision and recall are 0.9593 / 0.8761 for recommended, 0.6705 / 0.7623 for not_recommended, and 0.3791 / 0.5655 for no_idea. Held-out macro F1 is 0.0091 below epoch 2 and 0.0046 below epoch 3. The last logged training loss, averaged over steps 32,801–32,850, is 1.2423. The score files have no loss. Among epochs 1 through 4, epoch 2 still has the highest held-out macro F1.
+
+## TookaBERT epoch 2 with a no_idea penalty
+
+On 22 Aban 1405 (13 November 2026) `src/experiments/tookabert_noidea_penalty.py` loads the epoch 2 weights and trains one epoch on the same 1,051,627 reviews. The output directory is `experiments/tookabert-noidea-penalty-2026-11-13`. The earlier experiment directory stays as it was.
+
+Epoch 2 held-out recall for `no_idea` is 0.5632 on 474,906 rows, so 267,484 predictions are correct and 207,422 are misses. Those misses were predicted `recommended` or `not_recommended`. `heldout_metrics.json` does not store which of the two.
+
+The custom term is `no_idea_wrong_mass` in that file. For one batch it keeps only the rows whose true label is `no_idea`, reads the softmax probabilities, and averages `p(recommended) + p(not_recommended)`. That quantity is the probability left after `p(no_idea)`, so it grows when a true `no_idea` review is given to either of the other two classes. Other true labels add nothing to this average. If the batch has no `no_idea` row, the term is 0. The trainer adds it once:
+
+class-weighted cross-entropy + 1.0 × that mean.
+
+The class weights are unchanged from the earlier run. The new score files include `confusion_matrix`, with the true label on the rows and the prediction on the columns. Accuracy and F1 for this run are not in this note yet.
