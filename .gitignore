@@ -29,6 +29,7 @@ artifacts/**
 !artifacts/**/.gitkeep
 mlruns/
 experiments/
+!src/experiments
 *.pt
 *.bin
 *.safetensors
