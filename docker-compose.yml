@@ -1,0 +1,54 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      EXPERIMENTS_DIR: /models/experiments
+      MODELS_DIR: /models/artifacts
+      HF_HOME: /cache/huggingface
+      TOKENIZERS_PARALLELISM: "false"
+    volumes:
+      - ./experiments:/models/experiments:ro
+      - ./models:/models/artifacts:ro
+      - hf-cache:/cache/huggingface
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  hf-cache:

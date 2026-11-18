@@ -14,6 +14,7 @@ COMMANDS: dict[str, str] = {
     "preprocess": "Rewrite cleaned review bodies and write a CSV.",
     "tokenize": "Tokenize preprocessed review bodies and write parquet.",
     "tookabert-v2": "Download, preprocess, train, and score TookaBERT on this machine.",
+    "api": "Serve the review checkpoints over HTTP.",
 }
 
 
@@ -51,6 +52,11 @@ def main(argv: list[str] | None = None) -> None:
 
         tookabert_main(rest)
         return
+    if command == "api":
+        import uvicorn
+
+        uvicorn.run("src.api.app:app", host="0.0.0.0", port=8000)
+        return
     print(f"unknown command: {command}", file=sys.stderr)
     _print_help(file=sys.stderr)
     raise SystemExit(2)
@@ -61,7 +67,7 @@ def _print_help(*, file) -> None:
     print(file=file)
     print("commands:", file=file)
     for name, help_text in COMMANDS.items():
-        print(f"  {name:<12} {help_text}", file=file)
+        print(f"  {name:<16} {help_text}", file=file)
     print(file=file)
     print("Run python -m src <command> --help for that command's options.", file=file)
 

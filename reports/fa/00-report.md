@@ -26,7 +26,7 @@ pandas،
 
 `DataFrame.isnull().sum()`.
 
- هیچ سطری نمونه‌برداری نشده است. بخش ۹ گذر دوم را ثبت می‌کند، از `notebooks/02-descriptive-analysis.ipynb`، و همان موردهایی را می‌سنجد که بخش ۶ باز گذاشته بود. بخش ۱۰ گذر نویسه‌ها را در همان دفترچه ثبت می‌کند: رقم، حرف، ایموجی، نیم‌فاصله، و فاصله درون `body` خام. بخش ۱۱ خط پایه TF-IDF و رگرسیون لجستیک را در `notebooks/04-baseline.ipynb` ثبت می‌کند. بخش ۱۲ تنظیم دقیق پیشنهاد را در چهار دفترچه کولب ثبت می‌کند. بخش ۱۳ اجراهای چهار بلوک بالا روی ۱۰٪ داده را در `notebooks/colab3/` ثبت می‌کند. بخش ۱۴ مدل احساس منتشرشده ParsBERT را روی همه نظرهای برچسب‌دار ثبت می‌کند. بخش ۱۵ اجرای TookaBERT با پیش‌پردازش نسخه ۲ روی سرور را ثبت می‌کند، روی نمونه طبقه‌بندی‌شده ۲۰٪. دورهای ۱ تا ۵ سنجیده شده‌اند. بخش ۱۶ ادامه از دور ۲ را ثبت می‌کند، با جریمه روی ردیف‌هایی که برچسب واقعی‌شان `no_idea` است. بخش ۱۷ چک‌پوینت رگرسیون یک‌خروجیِ آموزش‌ندیده را ثبت می‌کند که از همان طبقه‌بند دور ۲ ساخته شد. بخش ۱۸ ترنسفورمر، توکنایزر، و امبدینگ هر آزمایش را ثبت می‌کند. بخش ۱۹ خط لوله متنی را ثبت می‌کند که هر کدام از آن آزمایش‌ها واقعاً روی آن آموزش دیدند یا سنجیده شدند. بخش ۲۰ یک دور آموزش بازه امتیاز TookaBERT را در `notebooks/colab/07-tookabert-rating-band.ipynb` ثبت می‌کند.
+ هیچ سطری نمونه‌برداری نشده است. بخش ۹ گذر دوم را ثبت می‌کند، از `notebooks/02-descriptive-analysis.ipynb`، و همان موردهایی را می‌سنجد که بخش ۶ باز گذاشته بود. بخش ۱۰ گذر نویسه‌ها را در همان دفترچه ثبت می‌کند: رقم، حرف، ایموجی، نیم‌فاصله، و فاصله درون `body` خام. بخش ۱۱ خط پایه TF-IDF و رگرسیون لجستیک را در `notebooks/04-baseline.ipynb` ثبت می‌کند. بخش ۱۲ تنظیم دقیق پیشنهاد را در چهار دفترچه کولب ثبت می‌کند. بخش ۱۳ اجراهای چهار بلوک بالا روی ۱۰٪ داده را در `notebooks/colab3/` ثبت می‌کند. بخش ۱۴ مدل احساس منتشرشده ParsBERT را روی همه نظرهای برچسب‌دار ثبت می‌کند. بخش ۱۵ اجرای TookaBERT با پیش‌پردازش نسخه ۲ روی سرور را ثبت می‌کند، روی نمونه طبقه‌بندی‌شده ۲۰٪. دورهای ۱ تا ۵ سنجیده شده‌اند. بخش ۱۶ ادامه از دور ۲ را ثبت می‌کند، با جریمه روی ردیف‌هایی که برچسب واقعی‌شان `no_idea` است. بخش ۱۷ چک‌پوینت رگرسیون یک‌خروجیِ آموزش‌ندیده را ثبت می‌کند که از همان طبقه‌بند دور ۲ ساخته شد. بخش ۱۸ ترنسفورمر، توکنایزر، و امبدینگ هر آزمایش را ثبت می‌کند. بخش ۱۹ خط لوله متنی را ثبت می‌کند که هر کدام از آن آزمایش‌ها واقعاً روی آن آموزش دیدند یا سنجیده شدند. بخش ۲۰ یک دور آموزش بازه امتیاز TookaBERT را در `notebooks/colab/07-tookabert-rating-band.ipynb` ثبت می‌کند. بخش ۲۱ رابط HTTP، تصویر داکر، و داشبورد Grafana را ثبت می‌کند که همان روز اضافه شدند.
 
 ## ۱. فایل و تجزیه
 
@@ -707,3 +707,83 @@ F1 هر کلاس روی مجموعه کنارگذاشته، دورهای ۱ تا
 | `tokenizer.json` | 3,974,594 |
 | `tokenizer_config.json` | 533 |
 | `train_metrics.json` | 427 |
+
+## ۲۱. رابط HTTP، تصویر داکر، و Grafana
+
+در ۲۷ آبان ۱۴۰۵ (۱۸ نوامبر ۲۰۲۶)، چهارشنبه، چک‌پوینت‌های روی دیسک پشت یک رابط HTTP قرار گرفتند. کد در `src/api/` است. فرمان `python -m src api` است و `uvicorn` را روی درگاه ۸۰۰۰ اجرا می‌کند. وابستگی‌های آن فرایند در `requirements.txt` فهرست شده‌اند. PyTorch و Hazm را خود تصویر نصب می‌کند، نه آن فایل. Hazm با `--no-deps` نصب می‌شود، همان‌طور که `src/preprocess.py` می‌گوید.
+
+تصویر وزن‌ها را در خود ندارد. `experiments/` حدود ۱۰ گیگابایت است و هر `model.safetensors` مناسب استنتاج حدود ۴۶۹ مگابایت است. چند پوشه علاوه بر آن یک کپی آموزش‌دهنده و یک `optimizer.pt` حدود ۲۱۷ مگابایت دارند. آن باقی‌مانده‌های آموزش سرو نمی‌شوند. `Dockerfile` فقط `requirements.txt` و `src/` را کپی می‌کند. `.dockerignore` پوشه‌های `experiments/` و `models/` و `data/` و `notebooks/` را از زمینه ساخت بیرون می‌گذارد. `docker-compose.yml` مسیر `./experiments` را فقط‌خواندنی در `/models/experiments` سوار می‌کند و `./models` را فقط‌خواندنی در `/models/artifacts`. متغیرهای محیط `EXPERIMENTS_DIR` و `MODELS_DIR` هستند. یک حجم کش Hugging Face در `/cache/huggingface` سوار است تا توکنایزر ParsBERT یک بار دانلود شود.
+
+```bash
+docker compose up --build
+```
+
+| سرویس | نشانی |
+| --- | --- |
+| سند رابط | http://localhost:8000/docs |
+| سنجه‌ها | http://localhost:8000/metrics |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+
+ورود Grafana با `admin` / `admin` است. مشاهده ناشناس روشن است. فایل داشبورد `deploy/grafana/dashboards/review-api.json` است و در پوشه Digikala قرار می‌گیرد. Prometheus فایل `deploy/prometheus/prometheus.yml` است و هر ۵ ثانیه `GET /metrics` را می‌خواند. `docker compose config` موفق بود. خود تصویر در آن بررسی ساخته نشد. اولین `docker compose up --build` چرخ PyTorch مخصوص CPU را دانلود می‌کند.
+
+مسیرها از فایل‌هایی ساخته می‌شوند که هنگام شروع فرایند حاضرند. چک‌پوینتی که بعداً اضافه شود پس از راه‌اندازی دوباره دیده می‌شود. `GET /models` سیزده چک‌پوینت را فهرست کرد. پیش‌بینی و امبدینگ تا `POST /models/{model_id}/load` کد ۴۰۹ برمی‌گردانند. بار دوم نسخه‌ای را که در حافظه است نگه می‌دارد و `seconds: 0` را گزارش می‌کند. `POST /models/{model_id}/unload` آن را از حافظه برمی‌دارد. `GET /health` و `GET /health/live` و `GET /health/ready` می‌گویند چند چک‌پوینت روی دیسک است و چند تا بار شده است. اگر سوارشده خالی باشد، ready کد ۵۰۳ می‌دهد.
+
+| شناسه مدل | وظیفه | آموزش‌دیده | خط لوله متن خام | توکنایزر | بیشینه طول | فایل‌ها |
+| --- | --- | --- | --- | --- | ---: | --- |
+| `tookabert-v2-epoch-1` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/epochs/epoch-1` |
+| `tookabert-v2-epoch-2` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/epochs/epoch-2` |
+| `tookabert-v2-epoch-3` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/epochs/epoch-3` |
+| `tookabert-v2-epoch-4` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/epochs/epoch-4` |
+| `tookabert-v2-epoch-5` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/epochs/epoch-5` |
+| `tookabert-noidea-epoch-1` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/tookabert-noidea-penalty-2026-11-13/epoch-1` |
+| `tookabert-noidea-epoch-2` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/tookabert-noidea-penalty-2026-11-13/epoch-2` |
+| `tookabert-noidea-epoch-3` | پیشنهاد | بله | `full` | `tookabert` | 128 | `experiments/tookabert-noidea-penalty-2026-11-13/epoch-3` |
+| `tookabert-rating-band` | بازه امتیاز | بله | `full` | `tookabert` | 128 | `experiments/PartAI--TookaBERT-Base--rating-band` |
+| `tookabert-rating-band-untrained` | بازه امتیاز | نه | `full` | `tookabert` | 128 | `experiments/baselines/tookabert-epoch2-rating-band` |
+| `tookabert-rate-untrained` | امتیاز عددی | نه | `full` | `tookabert` | 128 | `experiments/baselines/tookabert-epoch2-regression` |
+| `tfidf-recommendation` | پیشنهاد | بله | `shared` | `parsbert` | 512 | `models/recommendation-tfidf-logreg.joblib` |
+| `tfidf-rating-band` | بازه امتیاز | بله | `shared` | `parsbert` | 512 | `models/rating-band-tfidf-logreg.joblib` |
+
+دو سر آموزش‌ندیده در پاسخ `"trained": false` دارند. سنجه آن‌ها سنجه آموزش‌دیده نیست. پوشه‌های زیر `trainer/` در این جدول نیستند.
+
+`shared` همان `src/preprocess.py` است: NFKC، حروف و رقم فارسی، یک نیم‌فاصله، حذف نشانی وب، محدود کردن تکرار نویسه به دو، سپس ریشه‌یابی Hazm. متنی است که مدل‌های TF-IDF روی آن برازش شده‌اند. `text-v2` همان `src/experiments/text_v2.py` است: حروف، سپس رقم، سپس ایموجی، بدون ریشه‌یابی. `full` یعنی `shared` و بعد `text-v2`. وقتی متن خام نظر فرستاده شود، چک‌پوینت‌های TookaBERT همین متن را دیده‌اند. هر خط لوله `POST /preprocess/{pipeline}` و `POST /preprocess/{pipeline}/batch` دارد.
+
+`POST /tokenize/tookabert` توکنایزر ذخیره‌شده در `experiments/epochs/epoch-2` را می‌خواند. طول پیش‌فرض ۱۲۸ است. `POST /tokenize/parsbert` مدل `HooshvareLab/bert-fa-base-uncased` را بار می‌کند. طول پیش‌فرض ۵۱۲ است. هر دو مسیر `/batch` دارند. امبدینگ TookaBERT میانگین حالت پنهان آخر با نقاب توجه است، ۷۶۸ بعد. امبدینگ TF-IDF وزن‌های غیرصفر است، بعد از آنکه شناسه‌های ParsBERT به رشته جداشده با فاصله تبدیل شوند و شناسه طبقه‌بند و جداکننده و پد حذف شود. همان رشته سندی است که بردارساز روی آن برازش شده. مسیرهای امبدینگ `POST /embed/{model_id}` و `POST /embed/{model_id}/batch` هستند و خط لوله نویسه را اجرا نمی‌کنند.
+
+مسیرهای امتیاز که پیش‌پردازش نمی‌کنند، برای متنی که از قبل به شکل آموزش همان مدل درآمده است:
+
+| وظیفه | یک متن | دسته |
+| --- | --- | --- |
+| پیشنهاد | `POST /predict/recommendation/{model_id}` | `POST /predict/recommendation/{model_id}/batch` |
+| بازه امتیاز | `POST /predict/rating-band/{model_id}` | `POST /predict/rating-band/{model_id}/batch` |
+| امتیاز عددی | `POST /predict/rate/{model_id}` | `POST /predict/rate/{model_id}/batch` |
+
+مسیرهایی که نظر خام می‌گیرند و خط لوله همان مدل، سپس توکنایزر و طبقه‌بند را اجرا می‌کنند:
+
+| وظیفه | یک متن | دسته |
+| --- | --- | --- |
+| پیشنهاد | `POST /recommendation/{model_id}` | `POST /recommendation/{model_id}/batch` |
+| بازه امتیاز | `POST /rating-band/{model_id}` | `POST /rating-band/{model_id}/batch` |
+| امتیاز عددی | `POST /rate/{model_id}` | `POST /rate/{model_id}/batch` |
+
+`{model_id}` یکی از شناسه‌های جدول است و فقط مسیرهای همان وظیفه وجود دارند. یک دسته ۱ تا ۳۲ متن می‌پذیرد. هر متن حداکثر ۲۰٬۰۰۰ نویسه است. پاسخ طبقه‌بندی `label` و `label_id` و `score` و `probabilities` دارد. پاسخ امتیاز عددی `label` برابر `rate` دارد و `score` همان خروجی تکی است. متن خالی در دسته خطای همان مورد است. متن خالی در مسیر تکی کد ۴۲۲ می‌دهد.
+
+سری‌ها در `src/api/metrics.py` تعریف شده‌اند و داشبورد Grafana آن‌ها را می‌کشد:
+
+| سری | چه می‌شمارد |
+| --- | --- |
+| `review_http_requests_total` و `review_http_request_seconds` | روش، قالب مسیر، و وضعیت. `/metrics` شمرده نمی‌شود |
+| `review_predictions_total` | مدل، وظیفه، برچسب، و اینکه فراخوانی پیش‌پردازش کرده یا نه |
+| `review_inference_seconds` | زمان طبقه‌بند، شامل توکنایز |
+| `review_preprocess_seconds` | یک خط لوله |
+| `review_tokenize_seconds` | یک توکنایزر |
+| `review_embed_seconds` | یک فراخوانی امبدینگ |
+| `review_batch_items` | شمار متن‌ها در یک دسته |
+| `review_model_load_seconds` | زمان خواندن یک چک‌پوینت به حافظه |
+| `review_models_loaded` و `review_models_catalog` | چک‌پوینت‌های مقیم، و چک‌پوینت‌هایی که هنگام شروع پیدا شدند |
+| `review_tokenizers_loaded` | توکنایزرهای مقیم |
+| `review_empty_text_total` | ورودی خالی، یا خالی پس از خط لوله |
+| `review_model_errors_total` | شکست بار و شکست استنتاج |
+
+یک فرایند محلی، بدون تصویر، برنامه را وارد کرد و صدا زد. ۱۰۲ مسیر ثبت شد. `GET /health` کد ۲۰۰ داد، با `models_on_disk` برابر ۱۳ و `models_loaded` برابر ۰. `POST /preprocess/text-v2` روی `سلامممم 123` مقدار `سلامم` را برگرداند: تکرار نویسه کوتاه شد و توکنی که فقط رقم بود حذف شد. `POST /preprocess/full` روی `این کالا عالی بود` مقدار `ا کالا عال بود` را برگرداند. `POST /predict/recommendation/tookabert-v2-epoch-2` پیش از بار کردن کد ۴۰۹ داد. `GET /metrics` شامل `review_models_catalog` و `review_http_requests_total` بود. همان یادداشت کوتاه در `README.md` زیر «API and Docker» است.

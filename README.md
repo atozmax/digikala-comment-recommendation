@@ -49,3 +49,54 @@ python -m src tokenize
 ```
 
 `preprocess` reads `data/cleaned/digikala-comments-cleaned.csv` and writes `data/processed/digikala-comments-preprocessed.csv`. It maps Arabic letters onto Persian letters, folds ASCII and Arabic-Indic digits onto Persian digits, keeps one half-space inside a word, and keeps emoji and Latin letters. `tokenize` reads that CSV and writes `data/processed/digikala-comments-tokenized.parquet` with the `HooshvareLab/bert-fa-base-uncased` tokenizer, truncated at 512 tokens. The paths and the checkpoint name are in `.env.example`.
+
+## API and Docker
+
+The image contains the API and its libraries. Checkpoints stay on the host and are mounted read-only. `experiments/` holds the TookaBERT checkpoints. `models/` holds the two TF-IDF joblib files. Optimizer files under `trainer/` are not served.
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+| --- | --- |
+| API docs | http://localhost:8000/docs |
+| Metrics | http://localhost:8000/metrics |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+
+Grafana signs in as `admin` / `admin`. The Review API dashboard is in the Digikala folder. Anonymous view is enabled. Prometheus scrapes `GET /metrics` every 5 seconds. The series are defined in `src/api/metrics.py`: request rate and latency, predictions by model and label, preprocess / tokenize / embed / inference latency, batch size, model load time, empty-text counts, load errors, and how many checkpoints are loaded.
+
+Routes are built from the files present when the process starts. Restart the API after adding a checkpoint.
+
+`POST /models/{model_id}/load` reads one checkpoint into memory. `POST /models/{model_id}/unload` drops it. Predict and embed return 409 until that model is loaded. A second load keeps the copy already in memory.
+
+Text pipelines, each with a `/batch` route:
+
+| Route | What it does |
+| --- | --- |
+| `POST /preprocess/shared` | The stemmed text the TF-IDF models were fit on |
+| `POST /preprocess/text-v2` | Letters, then digits, then emoji. No stemming |
+| `POST /preprocess/full` | `shared`, then `text-v2`. Raw text for every TookaBERT checkpoint |
+
+Tokenizers, each with a `/batch` route: `POST /tokenize/tookabert` (length 128) and `POST /tokenize/parsbert` (length 512). ParsBERT is downloaded on first use into the Compose Hugging Face cache.
+
+Every checkpoint has four score routes, plus embed routes. `{id}` is the model id from `GET /models`.
+
+| Route | Input |
+| --- | --- |
+| `POST /predict/recommendation/{id}` | Text already in the model's training surface form |
+| `POST /predict/rating-band/{id}` | Same, for a rating-band checkpoint |
+| `POST /predict/rate/{id}` | Same, for the untrained rate layer |
+| `POST /recommendation/{id}` | Raw review text. Runs that model's pipeline, then scores |
+| `POST /rating-band/{id}` | Raw review text for a rating-band checkpoint |
+| `POST /rate/{id}` | Raw review text for the rate layer |
+| `POST /embed/{id}` | Text as given. No character pipeline |
+
+Each of those has a `/batch` route. A batch accepts up to 32 texts. The two untrained heads are `tookabert-rating-band-untrained` and `tookabert-rate-untrained`. Their responses set `"trained": false`.
+
+Without Compose, from the repository root:
+
+```bash
+python -m src api
+```

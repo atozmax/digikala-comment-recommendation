@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 5 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows. Section 17 records the untrained one-output regression checkpoint built from that epoch 2 classifier. Section 18 records the transformer, tokenizer, and embedding used by each experiment. Section 19 records the text pipeline each of those experiments actually trained or scored on. Section 20 records the one-epoch TookaBERT rating-band run in `notebooks/colab/07-tookabert-rating-band.ipynb`.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 5 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows. Section 17 records the untrained one-output regression checkpoint built from that epoch 2 classifier. Section 18 records the transformer, tokenizer, and embedding used by each experiment. Section 19 records the text pipeline each of those experiments actually trained or scored on. Section 20 records the one-epoch TookaBERT rating-band run in `notebooks/colab/07-tookabert-rating-band.ipynb`. Section 21 records the HTTP API, the Docker image, and the Grafana dashboard added on the same day.
 
 ## 1. File and parse
 
@@ -683,3 +683,83 @@ The local copy of the scored checkpoint is `experiments/PartAI--TookaBERT-Base--
 | `tokenizer.json` | 3,974,594 |
 | `tokenizer_config.json` | 533 |
 | `train_metrics.json` | 427 |
+
+## 21. HTTP API, Docker image, and Grafana
+
+On 27 Aban 1405 (18 November 2026), Wednesday, the checkpoints on disk were wrapped in an HTTP API. The code is `src/api/`. The command is `python -m src api`, which runs `uvicorn` on port 8000. Dependencies for that process are listed in `requirements.txt`. PyTorch and Hazm are installed by the image, not by that file. Hazm is installed with `--no-deps`, matching `src/preprocess.py`.
+
+The image does not contain the weights. `experiments/` is about 10 GB, and each inference `model.safetensors` is about 469 MB. Several of those folders also keep a trainer copy and an `optimizer.pt` of about 217 MB. Those training leftovers are not served. `Dockerfile` copies `requirements.txt` and `src/`. `.dockerignore` keeps `experiments/`, `models/`, `data/`, and `notebooks/` out of the build context. `docker-compose.yml` mounts `./experiments` read-only at `/models/experiments` and `./models` read-only at `/models/artifacts`. The environment variables are `EXPERIMENTS_DIR` and `MODELS_DIR`. A Hugging Face cache volume is mounted at `/cache/huggingface` so the ParsBERT tokenizer can be downloaded once.
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+| --- | --- |
+| API docs | http://localhost:8000/docs |
+| Metrics | http://localhost:8000/metrics |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+
+Grafana signs in as `admin` / `admin`. Anonymous viewing is enabled. The dashboard file is `deploy/grafana/dashboards/review-api.json`, in the Digikala folder. Prometheus is `deploy/prometheus/prometheus.yml`. It scrapes `GET /metrics` every 5 seconds. `docker compose config` succeeded. The image itself was not built in that check. The first `docker compose up --build` downloads the CPU PyTorch wheel.
+
+Routes are registered from the files present when the process starts. A checkpoint added later appears after a restart. `GET /models` listed 13 checkpoints. Predict and embed return HTTP 409 until `POST /models/{model_id}/load`. A second load keeps the copy already in memory and reports `seconds: 0`. `POST /models/{model_id}/unload` drops it. `GET /health`, `GET /health/live`, and `GET /health/ready` report how many checkpoints are on disk and how many are loaded. Ready is HTTP 503 when the mount has none.
+
+| Model id | Task | Trained | Pipeline for raw text | Tokenizer | Max length | Files |
+| --- | --- | --- | --- | --- | --- | --- |
+| `tookabert-v2-epoch-1` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/epochs/epoch-1` |
+| `tookabert-v2-epoch-2` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/epochs/epoch-2` |
+| `tookabert-v2-epoch-3` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/epochs/epoch-3` |
+| `tookabert-v2-epoch-4` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/epochs/epoch-4` |
+| `tookabert-v2-epoch-5` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/epochs/epoch-5` |
+| `tookabert-noidea-epoch-1` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/tookabert-noidea-penalty-2026-11-13/epoch-1` |
+| `tookabert-noidea-epoch-2` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/tookabert-noidea-penalty-2026-11-13/epoch-2` |
+| `tookabert-noidea-epoch-3` | recommendation | yes | `full` | `tookabert` | 128 | `experiments/tookabert-noidea-penalty-2026-11-13/epoch-3` |
+| `tookabert-rating-band` | rating band | yes | `full` | `tookabert` | 128 | `experiments/PartAI--TookaBERT-Base--rating-band` |
+| `tookabert-rating-band-untrained` | rating band | no | `full` | `tookabert` | 128 | `experiments/baselines/tookabert-epoch2-rating-band` |
+| `tookabert-rate-untrained` | rate | no | `full` | `tookabert` | 128 | `experiments/baselines/tookabert-epoch2-regression` |
+| `tfidf-recommendation` | recommendation | yes | `shared` | `parsbert` | 512 | `models/recommendation-tfidf-logreg.joblib` |
+| `tfidf-rating-band` | rating band | yes | `shared` | `parsbert` | 512 | `models/rating-band-tfidf-logreg.joblib` |
+
+The two untrained heads answer with `"trained": false`. Their scores are not trained scores. Directories under `trainer/` are not in this table.
+
+`shared` is `src/preprocess.py`: NFKC, Persian letters and digits, one half-space, URLs removed, a character run capped at two, then Hazm stemming. That is the text the TF-IDF models were fit on. `text-v2` is `src/experiments/text_v2.py`: letters, then digits, then emoji, with no stemming. `full` is `shared` and then `text-v2`. That is the text the TookaBERT checkpoints saw when the caller sends a raw review. Each pipeline has `POST /preprocess/{pipeline}` and `POST /preprocess/{pipeline}/batch`.
+
+`POST /tokenize/tookabert` reads the tokenizer saved in `experiments/epochs/epoch-2`. Its default length is 128. `POST /tokenize/parsbert` loads `HooshvareLab/bert-fa-base-uncased`. Its default length is 512. Both have a `/batch` route. A TookaBERT embedding is the attention-mask mean of the last hidden state, 768 dimensions. A TF-IDF embedding is the non-zero weights after ParsBERT ids are written as a space-separated string and the classifier, separator, and pad ids are removed. That is the document string the vectorizer was fit on. Embed routes are `POST /embed/{model_id}` and `POST /embed/{model_id}/batch`. They do not run a character pipeline.
+
+Score routes that do not preprocess, for text already in the training surface form:
+
+| Task | One text | Batch |
+| --- | --- | --- |
+| recommendation | `POST /predict/recommendation/{model_id}` | `POST /predict/recommendation/{model_id}/batch` |
+| rating band | `POST /predict/rating-band/{model_id}` | `POST /predict/rating-band/{model_id}/batch` |
+| rate | `POST /predict/rate/{model_id}` | `POST /predict/rate/{model_id}/batch` |
+
+Score routes that accept a raw review and run that model's pipeline, then its tokenizer and classifier:
+
+| Task | One text | Batch |
+| --- | --- | --- |
+| recommendation | `POST /recommendation/{model_id}` | `POST /recommendation/{model_id}/batch` |
+| rating band | `POST /rating-band/{model_id}` | `POST /rating-band/{model_id}/batch` |
+| rate | `POST /rate/{model_id}` | `POST /rate/{model_id}/batch` |
+
+`{model_id}` is one id from the table, and only the routes for that task exist. A batch accepts 1 to 32 texts. One text is at most 20,000 characters. A classification response has `label`, `label_id`, `score`, and `probabilities`. The rate response has `label` `rate` and `score` equal to the one output. A blank body in a batch is an item error. A blank body on a single score route is HTTP 422.
+
+The series are defined in `src/api/metrics.py` and drawn by the Grafana dashboard:
+
+| Series | What it counts |
+| --- | --- |
+| `review_http_requests_total`, `review_http_request_seconds` | Method, route template, and status. `/metrics` is not counted |
+| `review_predictions_total` | Model, task, label, and whether the call preprocessed |
+| `review_inference_seconds` | Classifier time, including tokenization |
+| `review_preprocess_seconds` | One pipeline |
+| `review_tokenize_seconds` | One tokenizer |
+| `review_embed_seconds` | One embedding call |
+| `review_batch_items` | Texts in one batch |
+| `review_model_load_seconds` | Time to read one checkpoint into memory |
+| `review_models_loaded`, `review_models_catalog` | Resident checkpoints, and checkpoints found at startup |
+| `review_tokenizers_loaded` | Resident tokenizers |
+| `review_empty_text_total` | Blank input, or blank after a pipeline |
+| `review_model_errors_total` | Failed loads and failed inference |
+
+A local process, without the image, imported the app and called it. It registered 102 paths. `GET /health` returned 200 with `models_on_disk` 13 and `models_loaded` 0. `POST /preprocess/text-v2` on `سلامممم 123` returned `سلامم`: the character run was capped, and the pure number token was dropped. `POST /preprocess/full` on `این کالا عالی بود` returned `ا کالا عال بود`. `POST /predict/recommendation/tookabert-v2-epoch-2` before a load returned 409. `GET /metrics` contained `review_models_catalog` and `review_http_requests_total`. The same short note is in `README.md` under "API and Docker".
