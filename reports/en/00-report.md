@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 5 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 5 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows. Section 17 records the untrained one-output regression checkpoint built from that epoch 2 classifier. Section 18 records the transformer, tokenizer, and embedding used by each experiment. Section 19 records the text pipeline each of those experiments actually trained or scored on.
 
 ## 1. File and parse
 
@@ -572,3 +572,55 @@ Held-out confusion counts for epoch 3:
 | no_idea | 90,132 | 81,218 | 303,556 |
 
 True `no_idea` predicted as `recommended` is 90,132, and predicted as `not_recommended` is 81,218. Together that is 171,350 misses, up from 159,648 on this run's epoch 2 and still below 207,422 on the source epoch 2. True `recommended` predicted as `no_idea` is 506,848, down from 529,825 on this run's epoch 2.
+
+## 17. Untrained regression baseline from epoch 2
+
+On 27 Aban 1405 (18 November 2026) `src/experiments/tookabert_regression_baseline.py` copied the epoch 2 classifier from section 15 and replaced the last layer. The source is `experiments/epochs/epoch-2`, the checkpoint with the highest held-out macro F1, 0.6972. The encoder weights are unchanged. `classifier.weight` was shape `[3, 768]` and `classifier.bias` was shape `[3]`. Those three-class parameters are not in the new file. The new layer is `classifier.weight` of shape `[1, 768]`, drawn from Normal(0, 0.02) with numpy seed 2026, and `classifier.bias` of shape `[1]`, set to zero. The saved config has `num_labels` 1, `problem_type` `regression`, and `id2label` `{"0": "rate"}`. The tokenizer files are copied from epoch 2.
+
+The checkpoint is `experiments/baselines/tookabert-epoch2-regression`: `model.safetensors` (491,647,964 bytes), `config.json`, `tokenizer.json`, `tokenizer_config.json`, and `baseline.json`. `baseline.json` records `"trained": false`. This file was not trained on `rate` and has no regression score. A later training run can start from it and fit the new layer to the numeric rating.
+
+## 18. Transformer, tokenizer, and embedding by experiment
+
+Each finished neural run uses the tokenizer and the token-embedding table that belong to its checkpoint. Those embedding weights stayed frozen. No experiment loaded a separate Word2Vec or FastText file. The shared preprocessed text was already stemmed with Hazm before these model tokenizers ran. Hazm is not the model tokenizer.
+
+| Experiment | Transformer | Tokenizer | Embedding |
+| --- | --- | --- | --- |
+| Tokenized parquet, `src/tokenize.py` | None | ParsBERT WordPiece, `HooshvareLab/bert-fa-base-uncased`, length 512 | None. The file stores token ids only |
+| TF-IDF logistic baseline, `notebooks/04-baseline.ipynb` | None | The same ParsBERT WordPiece. Special tokens are removed | TF-IDF over those ids, 34,185 terms, fit on the training split |
+| Colab ParsBERT, full labeled set | `HooshvareLab/bert-fa-base-uncased` | Its WordPiece, vocabulary 100,000, length 128 | That model's token embedding |
+| Colab XLM-RoBERTa, full labeled set | `FacebookAI/xlm-roberta-base` | Its SentencePiece, vocabulary 250,002, length 128 | That model's token embedding |
+| Colab TookaBERT, full labeled set | `PartAI/TookaBERT-Base` | Its BPE, vocabulary 48,000, length 128 | That model's token embedding |
+| Colab Shiraz | `lifeweb-ai/shiraz` was loaded | Its own WordPiece-style tokenizer | Its own token embedding. Training stopped before a checkpoint was saved |
+| 10% top-four TookaBERT | `PartAI/TookaBERT-Base` | TookaBERT BPE, length 128 | TookaBERT token embedding |
+| 10% top-four ParsBERT | `HooshvareLab/bert-fa-base-uncased` | ParsBERT WordPiece, length 128 | ParsBERT token embedding |
+| Published ParsBERT sentiment, scored only | `HooshvareLab/bert-fa-base-uncased-sentiment-digikala` | That model's WordPiece | That model's token embedding |
+| Server TookaBERT epochs 1–5 | `PartAI/TookaBERT-Base`, started from the Drive `best/` checkpoint | TookaBERT BPE, length 128 | TookaBERT token embedding |
+| no_idea-penalty epochs 1–3 | The same TookaBERT, started from epoch 2 | The epoch-2 TookaBERT tokenizer | The epoch-2 TookaBERT embedding |
+| Regression baseline in section 17 | The same epoch-2 TookaBERT, with a new one-output layer | The epoch-2 TookaBERT tokenizer | The epoch-2 TookaBERT embedding. The new layer is untrained |
+
+These notebooks were written and not run, so they have no trained weights: `notebooks/colab2/` (TookaBERT top four, ParsBERT top four, TookaBERT all blocks, TookaBERT no_idea weight), `notebooks/colab/05-tookabert-rate-regression.ipynb` (TookaBERT from Hugging Face), and `notebooks/colab/06-tookabert-semi-supervised.ipynb` (the epoch-2 TookaBERT checkpoint).
+
+## 19. Preprocess pipeline used by the experiments
+
+Two text pipelines are in the finished experiments. The Colab runs, the 10% runs, the published ParsBERT score, the tokenized parquet, and the TF-IDF baseline read the shared preprocessed CSV. The server TookaBERT epochs and the no_idea-penalty run read that same file and then apply three more stages. The regression baseline in section 17 was not trained, so it has no text of its own. It is the epoch-2 encoder, and epoch 2 saw the second pipeline.
+
+The shared file is Drive file `1vCkaGbSrXtlKUsdOrguUtuEYobT5vFxr`, `digikala-comments-preprocessed.csv`. It is the output of `src/cleaning.py` and then `src/preprocess.py`. Cleaning keeps `id`, `body`, `product_id`, `recommendation_status`, and `rate`. It drops a missing body, drops a missing `recommendation_status`, keeps `rate` in [0, 5], collapses whitespace in `body`, drops a body that is empty after that, drops duplicate ids, and drops duplicate full rows. Repeated bodies stay. `src/preprocess.py` then rewrites `body` and does not stem a second time later:
+
+1. NFKC, then Arabic letters onto Persian letters (`ك` to `ک`, `ي` and `ى` to `ی`, and the alef and heh forms in that map).
+2. Strip Arabic diacritics, tatweel, and invisible marks other than a half-space.
+3. Keep one interior half-space. Drop a repeated or edge half-space.
+4. Replace a URL or an email with a space.
+5. Fold ASCII and Arabic-Indic digits onto Persian digits.
+6. Cap a run of the same character at two.
+7. Collapse whitespace.
+8. Hazm word-tokenize, then Hazm-stem each token. Emoji and Latin letters stay. The lemmatizer is not used.
+
+That file has 5,258,342 labeled rows. At train time the Colab notebooks do not run those steps again. ParsBERT and TookaBERT keep the Persian digits. XLM-RoBERTa folds Persian digits back to ASCII inside the notebook, because that tokenizer was trained on ASCII digits. The tokenized parquet and the TF-IDF baseline then run the ParsBERT WordPiece tokenizer on this stemmed text. TF-IDF drops the classifier, separator, and pad ids.
+
+`src/experiments/tookabert_v2.py` starts from that stemmed CSV and does not stem again. `PREPROCESS_FLAGS` records `stem: false` and `remove_english: false`. The three added stages, in `src/experiments/text_v2.py`, run in this order:
+
+1. Letters: NFKC, the same Arabic-to-Persian letter map, diacritics and invisible marks removed, one interior half-space, URLs and emails removed, a character run capped at two. Digits, emoji, and Latin letters stay in this stage.
+2. Digits: ASCII and Arabic-Indic digits fold to Persian, then a token that is only digits is deleted. A token that mixes digits and letters, such as `A54`, stays.
+3. Emoji: emoji characters are deleted. A body that is empty after that is dropped.
+
+The file after the emoji stage has 5,258,135 rows, 207 fewer than the 5,258,342 labeled rows in the shared CSV. Epochs 1 through 5 and the three no_idea-penalty epochs train on a stratified 20% of those 5,258,135 rows and score the held-out 80% and the full file. Max length is 128. The TookaBERT tokenizer is the only tokenizer on this text.
