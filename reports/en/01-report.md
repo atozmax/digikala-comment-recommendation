@@ -135,9 +135,28 @@ Held-out per-class scores, from `epoch-4/heldout_metrics.json`:
 
 Full-set per-class F1: recommended 0.9158 (support 4,160,050), not_recommended 0.7134 (support 504,452), no_idea 0.4539 (support 593,633). Full-set precision and recall are 0.9593 / 0.8761 for recommended, 0.6705 / 0.7623 for not_recommended, and 0.3791 / 0.5655 for no_idea. Held-out macro F1 is 0.0091 below epoch 2 and 0.0046 below epoch 3. The last logged training loss, averaged over steps 32,801–32,850, is 1.2423. The score files have no loss. Among epochs 1 through 4, epoch 2 still has the highest held-out macro F1.
 
+## TookaBERT preprocessing v2, epoch 5
+
+Epoch 5 resumed from the saved epoch 4 weights on the same 20% training rows. The held-out score was written at 14:24 UTC on 13 November 2026 (22 Aban 1405) and the full-set score at 14:54 UTC. Files: `epoch-5/heldout_metrics.json` and `epoch-5/metrics.json`. Epoch 6 training started after that score and is not scored.
+
+| Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Epoch 5 held-out 80% | 4,206,508 | 0.8260 | 0.6840 | 0.8260 |
+| Epoch 5 full labeled set | 5,258,135 | 0.8293 | 0.6909 | 0.8293 |
+
+Held-out per-class scores, from `epoch-5/heldout_metrics.json`:
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| recommended | 0.9566 | 0.8760 | 0.9145 | 3,328,040 |
+| not_recommended | 0.6549 | 0.7448 | 0.6969 | 403,562 |
+| no_idea | 0.3696 | 0.5450 | 0.4405 | 474,906 |
+
+Full-set per-class F1: recommended 0.9157 (support 4,160,050), not_recommended 0.7064 (support 504,452), no_idea 0.4506 (support 593,633). Full-set precision and recall are 0.9578 / 0.8772 for recommended, 0.6638 / 0.7548 for not_recommended, and 0.3783 / 0.5573 for no_idea. Held-out macro F1 is 0.0132 below epoch 2 and 0.0041 below epoch 4. The last logged training loss, averaged over steps 32,801–32,850, is 1.3420. The score files have no loss. Among epochs 1 through 5, epoch 2 still has the highest held-out macro F1.
+
 ## TookaBERT epoch 2 with a no_idea penalty
 
-On 22 Aban 1405 (13 November 2026) `src/experiments/tookabert_noidea_penalty.py` loads the epoch 2 weights and trains one epoch on the same 1,051,627 reviews. The output directory is `experiments/tookabert-noidea-penalty-2026-11-13`. The earlier experiment directory stays as it was.
+On 22 Aban 1405 (13 November 2026) `src/experiments/tookabert_noidea_penalty.py` loads the epoch 2 weights and trains three epochs on the same 1,051,627 reviews. The output directory is `experiments/tookabert-noidea-penalty-2026-11-13`. The earlier experiment directory stays as it was. All three epochs are scored.
 
 Epoch 2 held-out recall for `no_idea` is 0.5632 on 474,906 rows, so 267,484 predictions are correct and 207,422 are misses. Those misses were predicted `recommended` or `not_recommended`. `heldout_metrics.json` does not store which of the two.
 
@@ -172,4 +191,62 @@ Held-out confusion counts, from `confusion_matrix`:
 | not_recommended | 11,548 | 272,333 | 119,681 |
 | no_idea | 80,319 | 68,836 | 325,751 |
 
-The two `no_idea` mistakes are 80,319 predicted `recommended` and 68,836 predicted `not_recommended`, 149,155 together. On the source epoch 2 those two mistakes added up to 207,422, with the split unknown. True `recommended` predicted `no_idea` is 548,987. Held-out macro F1 0.6776 is 0.0196 below the source epoch 2. The same command now continues with epochs 2 and 3 from this epoch's weights. Those epochs are not scored yet.
+The two `no_idea` mistakes are 80,319 predicted `recommended` and 68,836 predicted `not_recommended`, 149,155 together. On the source epoch 2 those two mistakes added up to 207,422, with the split unknown. True `recommended` predicted `no_idea` is 548,987. Held-out macro F1 0.6776 is 0.0196 below the source epoch 2.
+
+## TookaBERT no_idea penalty, epoch 2
+
+Epoch 2 continued from this run's epoch 1 weights on the same 1,051,627 reviews. The weights were saved at 15:27 UTC on 13 November 2026, the held-out score at 15:45 UTC, and the full-set score at 16:32 UTC. Files: `experiments/tookabert-noidea-penalty-2026-11-13/epoch-2/heldout_metrics.json` and `metrics.json`.
+
+| Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Held-out 80% | 4,206,508 | 0.7961 | 0.6749 | 0.7961 |
+| Full labeled set | 5,258,135 | 0.7991 | 0.6810 | 0.7991 |
+
+Held-out per-class scores, from `epoch-2/heldout_metrics.json`:
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| recommended | 0.9660 | 0.8288 | 0.8922 | 3,328,040 |
+| not_recommended | 0.7057 | 0.6815 | 0.6934 | 403,562 |
+| no_idea | 0.3279 | 0.6638 | 0.4390 | 474,906 |
+
+Full-set per-class F1: recommended 0.8932 (support 4,160,050), not_recommended 0.7031 (support 504,452), no_idea 0.4467 (support 593,633). Full-set precision and recall are 0.9670 / 0.8299 for recommended, 0.7155 / 0.6912 for not_recommended, and 0.3337 / 0.6750 for no_idea. The last logged training loss, averaged over steps 32,801–32,850, is 1.7856.
+
+Held-out confusion counts, from `confusion_matrix`:
+
+| True label | Predicted recommended | Predicted not_recommended | Predicted no_idea |
+| --- | ---: | ---: | ---: |
+| recommended | 2,758,396 | 39,819 | 529,825 |
+| not_recommended | 12,269 | 275,034 | 116,259 |
+| no_idea | 84,791 | 74,857 | 315,258 |
+
+The two `no_idea` mistakes are 84,791 predicted `recommended` and 74,857 predicted `not_recommended`, 159,648 together. That is 10,493 more than this run's epoch 1 and 47,774 fewer than the 207,422 misses on the source epoch 2. True `recommended` predicted `no_idea` is 529,825, down from 548,987 on this run's epoch 1. Held-out macro F1 0.6749 is 0.0027 below this run's epoch 1 and 0.0223 below the source epoch 2.
+
+## TookaBERT no_idea penalty, epoch 3
+
+Epoch 3 continued from this run's epoch 2 weights on the same 1,051,627 reviews. The weights were saved at 17:31 UTC on 13 November 2026, the held-out score at 17:50 UTC, and the full-set score at 18:14 UTC. The run finished at 18:14 UTC. Files: `experiments/tookabert-noidea-penalty-2026-11-13/epoch-3/heldout_metrics.json` and `metrics.json`.
+
+| Split | Rows | Accuracy | Macro F1 | Micro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Held-out 80% | 4,206,508 | 0.7986 | 0.6733 | 0.7986 |
+| Full labeled set | 5,258,135 | 0.8019 | 0.6801 | 0.8019 |
+
+Held-out per-class scores, from `epoch-3/heldout_metrics.json`:
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| recommended | 0.9641 | 0.8342 | 0.8944 | 3,328,040 |
+| not_recommended | 0.6890 | 0.6925 | 0.6907 | 403,562 |
+| no_idea | 0.3295 | 0.6392 | 0.4349 | 474,906 |
+
+Full-set per-class F1: recommended 0.8956 (support 4,160,050), not_recommended 0.7010 (support 504,452), no_idea 0.4436 (support 593,633). Full-set precision and recall are 0.9652 / 0.8353 for recommended, 0.6991 / 0.7030 for not_recommended, and 0.3362 / 0.6517 for no_idea. The last logged training loss, averaged over steps 32,801–32,850, is 1.9460.
+
+Held-out confusion counts, from `confusion_matrix`:
+
+| True label | Predicted recommended | Predicted not_recommended | Predicted no_idea |
+| --- | ---: | ---: | ---: |
+| recommended | 2,776,250 | 44,942 | 506,848 |
+| not_recommended | 13,314 | 279,459 | 110,789 |
+| no_idea | 90,132 | 81,218 | 303,556 |
+
+The two `no_idea` mistakes are 90,132 predicted `recommended` and 81,218 predicted `not_recommended`, 171,350 together. That is 11,702 more than this run's epoch 2 and 36,072 fewer than the 207,422 misses on the source epoch 2. True `recommended` predicted `no_idea` is 506,848, down from 529,825 on this run's epoch 2. Held-out macro F1 0.6733 is 0.0016 below this run's epoch 2, 0.0043 below this run's epoch 1, and 0.0239 below the source epoch 2. Among the three epochs of this run, epoch 1 has the highest held-out macro F1.

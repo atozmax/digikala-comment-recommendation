@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 4 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 5 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows.
 
 ## 1. File and parse
 
@@ -510,7 +510,7 @@ Every epoch trains on the same 1,051,627 reviews. The counts are from `sample/co
 | no_idea | 593,633 | 118,727 |
 | Total | 5,258,135 | 1,051,627 |
 
-The held-out 80% is 4,206,508 rows. The first completion wrote `kept.json` with epoch 2. Epochs 3 and 4 were trained from the previous epoch's weights. Epoch 4 held-out macro F1 is 0.6881. Among the four scored epochs, epoch 2 still has the highest held-out macro F1. Epoch 5 started at 01:35 UTC on 13 November 2026 and stopped before the first training step, so epochs 5, 6, and 7 have no scores.
+The held-out 80% is 4,206,508 rows. The first completion wrote `kept.json` with epoch 2. Epochs 3, 4, and 5 were trained from the previous epoch's weights. Epoch 5 held-out macro F1 is 0.6840. Among the five scored epochs, epoch 2 still has the highest held-out macro F1. Epoch 6 started at 14:54 UTC on 13 November 2026 and is not scored.
 
 | Epoch | Split | Rows | Accuracy | Macro F1 | Micro F1 |
 | --- | ---: | --- | ---: | ---: | ---: |
@@ -518,16 +518,18 @@ The held-out 80% is 4,206,508 rows. The first completion wrote `kept.json` with 
 | 2 | held-out 80% | 4,206,508 | 0.8312 | 0.6972 | 0.8312 |
 | 3 | held-out 80% | 4,206,508 | 0.8289 | 0.6927 | 0.8289 |
 | 4 | held-out 80% | 4,206,508 | 0.8270 | 0.6881 | 0.8270 |
+| 5 | held-out 80% | 4,206,508 | 0.8260 | 0.6840 | 0.8260 |
 | 1 | full labeled set | 5,258,135 | 0.8314 | 0.6983 | 0.8314 |
 | 2 | full labeled set | 5,258,135 | 0.8330 | 0.7010 | 0.8330 |
 | 3 | full labeled set | 5,258,135 | 0.8315 | 0.6981 | 0.8315 |
 | 4 | full labeled set | 5,258,135 | 0.8301 | 0.6944 | 0.8301 |
+| 5 | full labeled set | 5,258,135 | 0.8293 | 0.6909 | 0.8293 |
 
-Held-out per-class F1, epochs 1 through 4: recommended 0.9154, 0.9160, 0.9153, 0.9147; not_recommended 0.7221, 0.7217, 0.7133, 0.7048; no_idea 0.4521, 0.4538, 0.4495, 0.4448. The score files do not contain a loss. The last logged training loss is 1.0810 for epoch 1, 1.0954 for epoch 2, 1.1615 for epoch 3, and 1.2423 for epoch 4. The 20% training rows have no separate classification score.
+Held-out per-class F1, epochs 1 through 5: recommended 0.9154, 0.9160, 0.9153, 0.9147, 0.9145; not_recommended 0.7221, 0.7217, 0.7133, 0.7048, 0.6969; no_idea 0.4521, 0.4538, 0.4495, 0.4448, 0.4405. The score files do not contain a loss. The last logged training loss is 1.0810 for epoch 1, 1.0954 for epoch 2, 1.1615 for epoch 3, 1.2423 for epoch 4, and 1.3420 for epoch 5. The 20% training rows have no separate classification score.
 
 ## 16. TookaBERT epoch 2 with a no_idea penalty
 
-On 22 Aban 1405 (13 November 2026) `src/experiments/tookabert_noidea_penalty.py` starts from the epoch 2 weights in section 15. Epoch 2 has the highest held-out macro F1 of the four scored epochs, 0.6972. The run trains one further epoch on the same 1,051,627 reviews and writes `experiments/tookabert-noidea-penalty-2026-11-13`. It does not change `experiments/tookabert-preproc-v2-2026-11-12`.
+On 22 Aban 1405 (13 November 2026) `src/experiments/tookabert_noidea_penalty.py` starts from the epoch 2 weights in section 15. Epoch 2 has the highest held-out macro F1 of the five scored epochs, 0.6972. The run trained epochs 1 through 3 of this experiment on the same 1,051,627 reviews and writes `experiments/tookabert-noidea-penalty-2026-11-13`. It does not change `experiments/tookabert-preproc-v2-2026-11-12`. All three epochs are scored.
 
 From epoch 2's held-out scores, recall 0.5632 and support 474,906 give 267,484 correct `no_idea` predictions and 207,422 misses. Each of those misses was predicted `recommended` or `not_recommended`. The score file does not store the split between those two predictions.
 
@@ -545,4 +547,28 @@ Held-out confusion counts:
 | not_recommended | 11,548 | 272,333 | 119,681 |
 | no_idea | 80,319 | 68,836 | 325,751 |
 
-True `no_idea` predicted as `recommended` is 80,319, and predicted as `not_recommended` is 68,836. Together that is 149,155 misses, down from 207,422 on the source epoch 2. True `recommended` predicted as `no_idea` is 548,987. The same command now trains epochs 2 and 3 from these weights when epoch 1 is already saved. Those epochs have no scores yet.
+True `no_idea` predicted as `recommended` is 80,319, and predicted as `not_recommended` is 68,836. Together that is 149,155 misses, down from 207,422 on the source epoch 2. True `recommended` predicted as `no_idea` is 548,987.
+
+Epoch 2 of this run continued from the epoch 1 weights. The weights were saved at 15:27 UTC on 13 November 2026, the held-out score at 15:45 UTC, and the full-set score at 16:32 UTC. Held-out accuracy is 0.7961 and macro F1 is 0.6749. Full-set accuracy is 0.7991 and macro F1 is 0.6810. Held-out macro F1 is 0.0027 below this run's epoch 1 and 0.0223 below the source epoch 2. Held-out `no_idea` recall is 0.6638 and its F1 is 0.4390. Held-out per-class F1 is 0.8922 for recommended, 0.6934 for not_recommended, and 0.4390 for no_idea. The last logged training loss, over steps 32,801–32,850, is 1.7856.
+
+Held-out confusion counts for epoch 2:
+
+| True label | Predicted recommended | Predicted not_recommended | Predicted no_idea |
+| --- | ---: | ---: | ---: |
+| recommended | 2,758,396 | 39,819 | 529,825 |
+| not_recommended | 12,269 | 275,034 | 116,259 |
+| no_idea | 84,791 | 74,857 | 315,258 |
+
+True `no_idea` predicted as `recommended` is 84,791, and predicted as `not_recommended` is 74,857. Together that is 159,648 misses, up from 149,155 on this run's epoch 1 and still below 207,422 on the source epoch 2. True `recommended` predicted as `no_idea` is 529,825.
+
+Epoch 3 of this run continued from the epoch 2 weights. The weights were saved at 17:31 UTC on 13 November 2026, the held-out score at 17:50 UTC, and the full-set score at 18:14 UTC. The run finished at 18:14 UTC. Held-out accuracy is 0.7986 and macro F1 is 0.6733. Full-set accuracy is 0.8019 and macro F1 is 0.6801. Held-out macro F1 is 0.0016 below this run's epoch 2, 0.0043 below this run's epoch 1, and 0.0239 below the source epoch 2. Held-out `no_idea` recall is 0.6392 and its F1 is 0.4349. Held-out per-class F1 is 0.8944 for recommended, 0.6907 for not_recommended, and 0.4349 for no_idea. The last logged training loss, over steps 32,801–32,850, is 1.9460. Among the three epochs of this run, epoch 1 has the highest held-out macro F1.
+
+Held-out confusion counts for epoch 3:
+
+| True label | Predicted recommended | Predicted not_recommended | Predicted no_idea |
+| --- | ---: | ---: | ---: |
+| recommended | 2,776,250 | 44,942 | 506,848 |
+| not_recommended | 13,314 | 279,459 | 110,789 |
+| no_idea | 90,132 | 81,218 | 303,556 |
+
+True `no_idea` predicted as `recommended` is 90,132, and predicted as `not_recommended` is 81,218. Together that is 171,350 misses, up from 159,648 on this run's epoch 2 and still below 207,422 on the source epoch 2. True `recommended` predicted as `no_idea` is 506,848, down from 529,825 on this run's epoch 2.
