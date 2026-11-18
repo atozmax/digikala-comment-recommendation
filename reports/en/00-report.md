@@ -2,7 +2,7 @@
 
 # Descriptive analysis: schema and missing values
 
-This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 5 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows. Section 17 records the untrained one-output regression checkpoint built from that epoch 2 classifier. Section 18 records the transformer, tokenizer, and embedding used by each experiment. Section 19 records the text pipeline each of those experiments actually trained or scored on.
+This note records the first full-file audit in `notebooks/01-data-cleaning.ipynb`. Every count in sections 1–8 comes from that notebook: one pandas parse of `data/raw/digikala-comments.csv`, then `DataFrame.info()` and `DataFrame.isnull().sum()`. No row was sampled. Section 9 records the second pass, `notebooks/02-descriptive-analysis.ipynb`, which measures the items section 6 left open. Section 10 records the character pass in that same notebook: digits, letters, emoji, the half-space, and whitespace inside the raw `body`. Section 11 records the TF-IDF logistic-regression baseline in `notebooks/04-baseline.ipynb`. Section 12 records the recommendation fine-tunes in the four Colab notebooks. Section 13 records the 10% top-four runs in `notebooks/colab3/`. Section 14 records the published ParsBERT sentiment model scored on every labeled review. Section 15 records the server TookaBERT preprocessing run on a stratified 20% sample. Epochs 1 through 5 are scored. Section 16 records the follow-up that starts from epoch 2 and adds a penalty on true `no_idea` rows. Section 17 records the untrained one-output regression checkpoint built from that epoch 2 classifier. Section 18 records the transformer, tokenizer, and embedding used by each experiment. Section 19 records the text pipeline each of those experiments actually trained or scored on. Section 20 records the one-epoch TookaBERT rating-band run in `notebooks/colab/07-tookabert-rating-band.ipynb`.
 
 ## 1. File and parse
 
@@ -597,6 +597,7 @@ Each finished neural run uses the tokenizer and the token-embedding table that b
 | Server TookaBERT epochs 1–5 | `PartAI/TookaBERT-Base`, started from the Drive `best/` checkpoint | TookaBERT BPE, length 128 | TookaBERT token embedding |
 | no_idea-penalty epochs 1–3 | The same TookaBERT, started from epoch 2 | The epoch-2 TookaBERT tokenizer | The epoch-2 TookaBERT embedding |
 | Regression baseline in section 17 | The same epoch-2 TookaBERT, with a new one-output layer | The epoch-2 TookaBERT tokenizer | The epoch-2 TookaBERT embedding. The new layer is untrained |
+| Rating-band epoch in section 20 | The same epoch-2 TookaBERT, with a new three-class layer trained for one epoch | The epoch-2 TookaBERT tokenizer, length 128 | The epoch-2 TookaBERT embedding |
 
 These notebooks were written and not run, so they have no trained weights: `notebooks/colab2/` (TookaBERT top four, ParsBERT top four, TookaBERT all blocks, TookaBERT no_idea weight), `notebooks/colab/05-tookabert-rate-regression.ipynb` (TookaBERT from Hugging Face), and `notebooks/colab/06-tookabert-semi-supervised.ipynb` (the epoch-2 TookaBERT checkpoint).
 
@@ -623,4 +624,62 @@ That file has 5,258,342 labeled rows. At train time the Colab notebooks do not r
 2. Digits: ASCII and Arabic-Indic digits fold to Persian, then a token that is only digits is deleted. A token that mixes digits and letters, such as `A54`, stays.
 3. Emoji: emoji characters are deleted. A body that is empty after that is dropped.
 
-The file after the emoji stage has 5,258,135 rows, 207 fewer than the 5,258,342 labeled rows in the shared CSV. Epochs 1 through 5 and the three no_idea-penalty epochs train on a stratified 20% of those 5,258,135 rows and score the held-out 80% and the full file. Max length is 128. The TookaBERT tokenizer is the only tokenizer on this text.
+The file after the emoji stage has 5,258,135 rows, 207 fewer than the 5,258,342 labeled rows in the shared CSV. Epochs 1 through 5 and the three no_idea-penalty epochs train on a stratified 20% of those 5,258,135 rows and score the held-out 80% and the full file. Max length is 128. The TookaBERT tokenizer is the only tokenizer on this text. The rating-band epoch in section 20 uses the same three stages on all 5,258,135 rows, then the notebook split of train 3,680,692, validation 788,719, and test 788,724. It does not use the 20% sample.
+
+## 20. TookaBERT rating band, one epoch
+
+On 27 Aban 1405 (18 November 2026), Wednesday, `notebooks/colab/07-tookabert-rating-band.ipynb` finished one epoch. The public listing of Drive folder `1GKqsgeXT8uFFLYddJDnA9509bIiDHosd` is two directories: `logs/` and `rating-band/`. `logs/` holds `HooshvareLab--bert-fa-base-uncased.jsonl`, dated 11 November. `best/HooshvareLab--bert-fa-base-uncased` is absent from that listing. The rating-band files are under `rating-band/`. The scored checkpoint is `rating-band/runs/PartAI--TookaBERT-Base--rating-band/`. The listing has no `checkpoints/` directory and no `checkpoint-*` trainer directory.
+
+The run started from `experiments/baselines/tookabert-epoch2-rating-band`, the copy on Drive at `rating-band/rating-band-model`. `baseline.json` there records `"source": "experiments/epochs/epoch-2"`, `"trained": false`, labels `low` 0, `medium` 1, and `high` 2, and bands `0 <= rate < 2.5`, `2.5 <= rate < 4`, and `4 <= rate <= 5`. The head line is `classifier.weight [3, 768], classifier.bias [3], recommendation head discarded`, initialized `normal(0, 0.02), bias 0, numpy seed 2026`. The run config has `id2label` `{"0": "low", "1": "medium", "2": "high"}` and `problem_type` `single_label_classification`. `metrics.json`, `test_metrics.json`, and `train_metrics.json` each record `"stage": "rating-band"` and `"started_from": "/content/drive/MyDrive/digikala-experiments/rating-band/rating-band-model"`. `train_metrics.json` records `"epoch": 1.0` and `"step": 57511`.
+
+The notebook printed the prepared table after the letter, digit, and emoji pass: 5,258,135 rows, high 3,319,917, low 990,984, and medium 947,234. The split print is train 3,680,692, validation 788,719, and test 788,724. The printed class weights, in label order low, medium, high, are 1.7687, 1.8503, and 0.5279. The printed trainable-parameter count is 28,353,795. The progress line is `[57511/57511 2:52:23, Epoch 1/1]`. `train_metrics.json` has no row count. Its log is `train_runtime` 10346.9982, `train_samples_per_second` 355.726, `train_steps_per_second` 5.558, and `train_loss` 0.8828. The trainer table in the notebook shows training loss 0.8826, validation loss 0.8214, accuracy 0.6590, and F1 0.5836. The file's `train_loss` is the epoch average, 0.8828.
+
+Validation is `metrics.json`, `"split": "validation"`, 788,719 rows. Accuracy 0.6590, macro F1 0.5836, micro F1 0.6590.
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| low | 0.5508 | 0.5151 | 0.5324 | 148,647 |
+| medium | 0.3791 | 0.5337 | 0.4433 | 142,085 |
+| high | 0.8169 | 0.7377 | 0.7753 | 497,987 |
+
+Validation confusion counts, rows true and columns predicted, order low, medium, high:
+
+| True label | Predicted low | Predicted medium | Predicted high |
+| --- | ---: | ---: | ---: |
+| low | 76,575 | 31,780 | 40,292 |
+| medium | 24,225 | 75,825 | 42,035 |
+| high | 38,218 | 92,426 | 367,343 |
+
+Test is `test_metrics.json`, `"split": "test"`, 788,724 rows. Accuracy 0.6577, macro F1 0.5822, micro F1 0.6577.
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| low | 0.5511 | 0.5123 | 0.5310 | 148,649 |
+| medium | 0.3773 | 0.5315 | 0.4413 | 142,086 |
+| high | 0.8151 | 0.7371 | 0.7742 | 497,989 |
+
+Test confusion counts, same axis order:
+
+| True label | Predicted low | Predicted medium | Predicted high |
+| --- | ---: | ---: | ---: |
+| low | 76,158 | 31,939 | 40,552 |
+| medium | 23,833 | 75,520 | 42,733 |
+| high | 38,194 | 92,705 | 367,090 |
+
+The notebook printed the same validation summary as accuracy 0.659, macro F1 0.5836, micro F1 0.659, and the same test summary as accuracy 0.6577, macro F1 0.5822, micro F1 0.6577.
+
+Section 11 scores the same three bands with TF-IDF logistic regression. That validation macro F1 is 0.5495 and that test macro F1 is 0.5492. This epoch's validation macro F1 is 0.5836 and its test macro F1 is 0.5822.
+
+The labels here are low, medium, and high. The recommendation labels are recommended, not_recommended, and no_idea. The highest recommendation macro F1 in section 15 remains the epoch-2 held-out score, 0.6972. The rating-band macro F1 is the score for the three bands.
+
+The local copy of the scored checkpoint is `experiments/PartAI--TookaBERT-Base--rating-band/`. That directory is the Drive path `rating-band/runs/PartAI--TookaBERT-Base--rating-band/`.
+
+| File | Bytes |
+| --- | ---: |
+| `config.json` | 913 |
+| `metrics.json` | 904 |
+| `model.safetensors` | 491,654,148 |
+| `test_metrics.json` | 898 |
+| `tokenizer.json` | 3,974,594 |
+| `tokenizer_config.json` | 533 |
+| `train_metrics.json` | 427 |

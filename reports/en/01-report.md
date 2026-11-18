@@ -12,11 +12,11 @@ Each finished model has three `model.safetensors` files: `runs/...--head`, `runs
 
 | Model | Drive folder | Starting directory |
 | --- | --- | --- |
-| ParsBERT, `HooshvareLab/bert-fa-base-uncased` | https://drive.google.com/drive/folders/1GKqsgeXT8uFFLYddJDnA9509bIiDHosd?usp=sharing | `best/HooshvareLab--bert-fa-base-uncased` |
+| ParsBERT, `HooshvareLab/bert-fa-base-uncased` | https://drive.google.com/drive/folders/1GKqsgeXT8uFFLYddJDnA9509bIiDHosd?usp=sharing | Listing on 27 Aban 1405 is `logs/` and `rating-band/`. `best/HooshvareLab--bert-fa-base-uncased` is absent |
 | XLM-RoBERTa, `FacebookAI/xlm-roberta-base` | https://drive.google.com/drive/folders/1AEtn221vAuEW3yAzgQ6-JSeJd0-keHpm?usp=sharing | `best/FacebookAI--xlm-roberta-base` |
 | TookaBERT, `PartAI/TookaBERT-Base` | https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing | `best/PartAI--TookaBERT-Base` |
 
-Each of those directories holds `config.json`, `metrics.json`, `model.safetensors`, `tokenizer.json`, and `tokenizer_config.json`. The matching `runs/<name>--last_block` directory is the same run before it was copied into `best/`. The `runs/<name>--head` directory is the earlier frozen-encoder run. A continuation loads `best/`, not `head/`.
+The XLM-RoBERTa and TookaBERT directories hold `config.json`, `metrics.json`, `model.safetensors`, `tokenizer.json`, and `tokenizer_config.json`. The matching `runs/<name>--last_block` directory is the same run before it was copied into `best/`. The `runs/<name>--head` directory is the earlier frozen-encoder run. A continuation of those two models loads `best/`, not `head/`. The ParsBERT link in the table is the rating-band folder recorded at the end of this note.
 
 `notebooks/colab/04-shiraz-finetune.ipynb` has no weight file. `lifeweb-ai/shiraz` is not a starting point until a head epoch is saved.
 
@@ -250,3 +250,37 @@ Held-out confusion counts, from `confusion_matrix`:
 | no_idea | 90,132 | 81,218 | 303,556 |
 
 The two `no_idea` mistakes are 90,132 predicted `recommended` and 81,218 predicted `not_recommended`, 171,350 together. That is 11,702 more than this run's epoch 2 and 36,072 fewer than the 207,422 misses on the source epoch 2. True `recommended` predicted `no_idea` is 506,848, down from 529,825 on this run's epoch 2. Held-out macro F1 0.6733 is 0.0016 below this run's epoch 2, 0.0043 below this run's epoch 1, and 0.0239 below the source epoch 2. Among the three epochs of this run, epoch 1 has the highest held-out macro F1.
+
+## TookaBERT rating band, one epoch
+
+On 27 Aban 1405 (18 November 2026), Wednesday, the folder `1GKqsgeXT8uFFLYddJDnA9509bIiDHosd` lists `logs/` and `rating-band/`. `best/HooshvareLab--bert-fa-base-uncased` is absent. `notebooks/colab/07-tookabert-rating-band.ipynb` trained one epoch from `experiments/baselines/tookabert-epoch2-rating-band`: the epoch-2 encoder and a new untrained head for low, medium, and high. `baseline.json` records `"trained": false`. `train_metrics.json` records epoch 1.0, step 57,511, and train_loss 0.8828. The notebook split print is train 3,680,692, validation 788,719, and test 788,724, from a prepared table of 5,258,135 rows. The local copy is `experiments/PartAI--TookaBERT-Base--rating-band/`. Section 20 of `reports/en/00-report.md` records the same files.
+
+Validation, `metrics.json`, 788,719 rows: accuracy 0.6590, macro F1 0.5836, micro F1 0.6590.
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| low | 0.5508 | 0.5151 | 0.5324 | 148,647 |
+| medium | 0.3791 | 0.5337 | 0.4433 | 142,085 |
+| high | 0.8169 | 0.7377 | 0.7753 | 497,987 |
+
+| True label | Predicted low | Predicted medium | Predicted high |
+| --- | ---: | ---: | ---: |
+| low | 76,575 | 31,780 | 40,292 |
+| medium | 24,225 | 75,825 | 42,035 |
+| high | 38,218 | 92,426 | 367,343 |
+
+Test, `test_metrics.json`, 788,724 rows: accuracy 0.6577, macro F1 0.5822, micro F1 0.6577.
+
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| low | 0.5511 | 0.5123 | 0.5310 | 148,649 |
+| medium | 0.3773 | 0.5315 | 0.4413 | 142,086 |
+| high | 0.8151 | 0.7371 | 0.7742 | 497,989 |
+
+| True label | Predicted low | Predicted medium | Predicted high |
+| --- | ---: | ---: | ---: |
+| low | 76,158 | 31,939 | 40,552 |
+| medium | 23,833 | 75,520 | 42,733 |
+| high | 38,194 | 92,705 | 367,090 |
+
+These labels are low, medium, and high. The recommendation labels stay recommended, not_recommended, and no_idea, and the epoch-2 held-out recommendation macro F1 stays 0.6972.

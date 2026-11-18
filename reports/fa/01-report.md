@@ -12,11 +12,11 @@
 
 | مدل | پوشه درایو | پوشه شروع |
 | --- | --- | --- |
-| ParsBERT، `HooshvareLab/bert-fa-base-uncased` | https://drive.google.com/drive/folders/1GKqsgeXT8uFFLYddJDnA9509bIiDHosd?usp=sharing | `best/HooshvareLab--bert-fa-base-uncased` |
+| ParsBERT، `HooshvareLab/bert-fa-base-uncased` | https://drive.google.com/drive/folders/1GKqsgeXT8uFFLYddJDnA9509bIiDHosd?usp=sharing | فهرست ۲۷ آبان ۱۴۰۵ `logs/` و `rating-band/` است. `best/HooshvareLab--bert-fa-base-uncased` در فهرست نیست |
 | XLM-RoBERTa، `FacebookAI/xlm-roberta-base` | https://drive.google.com/drive/folders/1AEtn221vAuEW3yAzgQ6-JSeJd0-keHpm?usp=sharing | `best/FacebookAI--xlm-roberta-base` |
 | TookaBERT، `PartAI/TookaBERT-Base` | https://drive.google.com/drive/folders/1mcsqBfSqyEtD8iu5G0l8poeYR7oaitLl?usp=sharing | `best/PartAI--TookaBERT-Base` |
 
-هر یک از این پوشه‌ها `config.json`، `metrics.json`، `model.safetensors`، `tokenizer.json`، و `tokenizer_config.json` دارد. پوشه `runs/<name>--last_block` همان اجراست، پیش از کپی شدن به `best/`. پوشه `runs/<name>--head` اجرای قبلی با رمزگذار منجمد است. ادامه از `best/` بار می‌شود، نه از `head/`.
+پوشه‌های XLM-RoBERTa و TookaBERT هر کدام `config.json`، `metrics.json`، `model.safetensors`، `tokenizer.json`، و `tokenizer_config.json` دارند. پوشه `runs/<name>--last_block` همان اجراست، پیش از کپی شدن به `best/`. پوشه `runs/<name>--head` اجرای قبلی با رمزگذار منجمد است. ادامه آن دو مدل از `best/` بار می‌شود، نه از `head/`. پیوند ParsBERT در جدول همان پوشه بازه امتیاز است که در پایان این یادداشت ثبت شده است.
 
 `notebooks/colab/04-shiraz-finetune.ipynb` فایل وزن ندارد. `lifeweb-ai/shiraz` نقطه شروع نیست تا وقتی یک دور سر ذخیره شود.
 
@@ -250,3 +250,37 @@ F1 هر کلاس روی مجموعه کامل: recommended برابر 0.8956 (ت
 | no_idea | 90,132 | 81,218 | 303,556 |
 
 دو خطای `no_idea` برابر 90,132 پیش‌بینی `recommended` و 81,218 پیش‌بینی `not_recommended` است، روی هم ۱۷۱٬۳۵۰. این ۱۱٬۷۰۲ بیشتر از دور ۲ همین اجرا و ۳۶٬۰۷۲ کمتر از ۲۰۷٬۴۲۲ خطای دور ۲ مبدأ است. `recommended` واقعی که `no_idea` پیش‌بینی شده 506,848 است، کمتر از 529,825 در دور ۲ همین اجرا. F1 کلان مجموعه کنارگذاشته 0.6733، به اندازه 0.0016 پایین‌تر از دور ۲ همین اجرا، 0.0043 پایین‌تر از دور ۱ همین اجرا، و 0.0239 پایین‌تر از دور ۲ مبدأ است. میان سه دور این اجرا، دور ۱ بالاترین F1 کلان مجموعه کنارگذاشته را دارد.
+
+## TookaBERT بازه امتیاز، یک دور
+
+در ۲۷ آبان ۱۴۰۵ (۱۸ نوامبر ۲۰۲۶)، چهارشنبه، پوشه `1GKqsgeXT8uFFLYddJDnA9509bIiDHosd` فقط `logs/` و `rating-band/` را فهرست می‌کند. `best/HooshvareLab--bert-fa-base-uncased` در فهرست نیست. `notebooks/colab/07-tookabert-rating-band.ipynb` یک دور را از `experiments/baselines/tookabert-epoch2-rating-band` آموزش داد: انکودر دور ۲ و یک سر آموزش‌ندیده برای low و medium و high. `baseline.json` مقدار `"trained": false` را دارد. `train_metrics.json` دور 1.0، گام 57,511، و train_loss برابر 0.8828 را دارد. چاپ تقسیم دفترچه آموزش 3,680,692، اعتبارسنجی 788,719، و آزمون 788,724 است، از جدول آماده‌شده با 5,258,135 ردیف. نسخه محلی `experiments/PartAI--TookaBERT-Base--rating-band/` است. بخش ۲۰ در `reports/fa/00-report.md` همین فایل‌ها را ثبت کرده است.
+
+اعتبارسنجی، `metrics.json`، 788,719 ردیف: دقت 0.6590، F1 کلان 0.5836، F1 خرد 0.6590.
+
+| کلاس | دقت | بازخوانی | F1 | تعداد |
+| --- | ---: | ---: | ---: | ---: |
+| low | 0.5508 | 0.5151 | 0.5324 | 148,647 |
+| medium | 0.3791 | 0.5337 | 0.4433 | 142,085 |
+| high | 0.8169 | 0.7377 | 0.7753 | 497,987 |
+
+| برچسب واقعی | پیش‌بینی low | پیش‌بینی medium | پیش‌بینی high |
+| --- | ---: | ---: | ---: |
+| low | 76,575 | 31,780 | 40,292 |
+| medium | 24,225 | 75,825 | 42,035 |
+| high | 38,218 | 92,426 | 367,343 |
+
+آزمون، `test_metrics.json`، 788,724 ردیف: دقت 0.6577، F1 کلان 0.5822، F1 خرد 0.6577.
+
+| کلاس | دقت | بازخوانی | F1 | تعداد |
+| --- | ---: | ---: | ---: | ---: |
+| low | 0.5511 | 0.5123 | 0.5310 | 148,649 |
+| medium | 0.3773 | 0.5315 | 0.4413 | 142,086 |
+| high | 0.8151 | 0.7371 | 0.7742 | 497,989 |
+
+| برچسب واقعی | پیش‌بینی low | پیش‌بینی medium | پیش‌بینی high |
+| --- | ---: | ---: | ---: |
+| low | 76,158 | 31,939 | 40,552 |
+| medium | 23,833 | 75,520 | 42,733 |
+| high | 38,194 | 92,705 | 367,090 |
+
+برچسب‌های این اجرا low و medium و high هستند. برچسب‌های پیشنهاد recommended و not_recommended و no_idea می‌مانند، و F1 کلان کنارگذاشته دور ۲ برای پیشنهاد 0.6972 می‌ماند.
