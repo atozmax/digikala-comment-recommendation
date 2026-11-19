@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>گزارش پروژه تحلیل نظرهای دیجی‌کالا</title>
+<style>
+  @font-face {
+    font-family: "B Nazanin";
+    src: url("../../B Nazanin/BNazanin.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Times New Roman";
+    src: url("../../times.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+  }
+  @page {
+    size: A4;
+    margin: 16mm 15mm 20mm 15mm;
+    @bottom-center {
+      content: counter(page);
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      color: #14375a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: justify;
+    font-family: "B Nazanin", Tahoma, sans-serif;
+    font-size: 14pt;
+    line-height: 1.85;
+    color: #1a1a1a;
+  }
+  .en, code {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-style: normal;
+  }
+  h1, h2, h3 {
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: right;
+    page-break-after: avoid;
+  }
+  h1 { font-size: 22pt; margin: 0 0 8px; color: #14375a; }
+  h2 {
+    font-size: 16pt;
+    margin: 22px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #14375a;
+    color: #14375a;
+  }
+  h3 { font-size: 14.5pt; margin: 16px 0 6px; color: #24527a; }
+  p { margin: 0 0 8px; }
+  ul { margin: 4px 18px 10px 0; padding: 0; }
+  li { margin: 2px 0; }
+  .cover {
+    min-height: 250mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+    text-align: center;
+  }
+  .cover h1 { text-align: center; font-size: 26pt; }
+  .cover .sub { text-align: center; font-size: 16pt; margin-top: 8px; }
+  .cover .meta { text-align: center; margin-top: 28px; color: #333; }
+  .rule { height: 3px; background: #14375a; margin: 18px auto; width: 70%; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 14px;
+    page-break-inside: avoid;
+    font-size: 12pt;
+    font-family: "B Nazanin", Tahoma, sans-serif;
+  }
+  th, td {
+    border: 1px solid #c5d0dc;
+    padding: 4px 6px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  th {
+    background: #14375a;
+    color: #fff;
+    font-weight: 700;
+  }
+  tr:nth-child(even) td { background: #f4f7fb; }
+  td.r, th.r { text-align: right; }
+  caption {
+    caption-side: bottom;
+    text-align: right;
+    font-size: 11pt;
+    color: #333;
+    padding-top: 4px;
+  }
+  .note {
+    background: #f7f1e8;
+    border-right: 4px solid #b86b2a;
+    padding: 8px 12px;
+    margin: 8px 0 12px;
+  }
+  .fig {
+    margin: 10px 0 16px;
+    page-break-inside: avoid;
+  }
+  .fig .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  .fig .name { width: 210px; text-align: left; direction: ltr; font-family: "Times New Roman", Times, serif; font-size: 11pt; }
+  .fig .track { flex: 1; background: #e6eef6; height: 14px; }
+  .fig .bar { height: 14px; background: #1f6aa5; }
+  .fig .val { width: 52px; direction: ltr; font-family: "Times New Roman", Times, serif; font-size: 11pt; }
+  .caption { font-size: 11pt; color: #333; margin-top: 4px; }
+  .src { font-size: 11pt; color: #444; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="src">پروژه سوم</div>
+  <h1>تحلیل هوشمند نظرهای فارسی دیجی‌کالا</h1>
+  <div class="rule"></div>
+  <div class="sub">پیش‌بینی <span class="en">recommendation status</span> و <span class="en">rating band</span> از متن نظر</div>
+  <div class="meta">
+    <span class="en">Amirhossein Zare</span><br>
+    امیرحسین زارع<br>
+    <br>
+    تاریخ گزارش: ۲۸ آبان ۱۴۰۵ · ۱۹ نوامبر ۲۰۲۶<br>
+    شروع پروژه: ۳۰ مهر ۱۴۰۵ · ۲۲ اکتبر ۲۰۲۶<br>
+    پایان پروژه: ۲۸ آبان ۱۴۰۵ · ۱۹ نوامبر ۲۰۲۶<br>
+    <br>
+    منبع عددها: دفترچه‌ها، فایل‌های سنجه، و <span class="en">reports/en/00-report.md</span>
+  </div>
+</section>
+
+<h2>۱. چکیده</h2>
+<p>
+تنها ورودی مدل، ستون <span class="en">body</span> است. دو برچسب لازم است.
+برچسب اول <span class="en">recommendation status</span> با سه کلاس
+<span class="en">recommended</span>، <span class="en">not_recommended</span> و <span class="en">no_idea</span> است.
+برچسب دوم <span class="en">rating band</span> است و از عدد <span class="en">rate</span> ساخته می‌شود:
+<span class="en">low</span>، <span class="en">medium</span> و <span class="en">high</span>.
+خود <span class="en">rate</span> ویژگی مدل نیست.
+</p>
+<p>
+فایل خام ۶٬۱۵۶٬۲۸۹ سطر و ۱۵ ستون دارد. بعد از پاکسازی و برچسب‌دار کردن، مجموعه قابل آموزش پیشنهاد حدود ۵٫۲۶ میلیون سطر است.
+کلاس <span class="en">recommended</span> حدود ۷۹ درصد سطرهای برچسب‌دار است، پس <span class="en">accuracy</span> به‌تنهایی گمراه‌کننده است و معیار اصلی <span class="en">macro F1</span> است.
+</p>
+<p>
+خط پایه <span class="en">TF-IDF</span> با <span class="en">logistic regression</span> ساخته شد.
+سپس چند <span class="en">transformer</span> فارسی و چندزبانه تنظیم دقیق شدند:
+<span class="en">ParsBERT</span>، <span class="en">XLM-RoBERTa</span> و <span class="en">TookaBERT</span>.
+بهترین سنجه توصیه‌ای که روی داده کنارگذاشته و بزرگ حساب شد، دور ۲ از <span class="en">TookaBERT</span> با پیش‌پردازش نسخه ۲ است:
+<span class="en">accuracy</span> برابر ۰٫۸۳۱۲ و <span class="en">macro F1</span> برابر ۰٫۶۹۷۲ روی ۴٬۲۰۶٬۵۰۸ سطر.
+کلاس <span class="en">no_idea</span> در همه اجراها ضعیف ماند و <span class="en">F1</span> آن نزدیک ۰٫۴۲ تا ۰٫۴۵ است.
+</p>
+<p>
+برای <span class="en">rating band</span>، یک دور <span class="en">TookaBERT</span> از خط پایه <span class="en">TF-IDF</span> بهتر شد:
+<span class="en">macro F1</span> آزمون ۰٫۵۸۲۲ در برابر ۰٫۵۴۹۲.
+آزمایش اجباری <span class="en">semi-supervised</span> اجرا نشده است.
+آموزش <span class="en">Shiraz</span> قبل از ذخیره وزن خطا داد.
+لایه رگرسیون <span class="en">rate</span> ساخته شد ولی آموزش ندید.
+سرویس <span class="en">FastAPI</span> و داشبورد <span class="en">Grafana</span> ساخته شد. وزن مدل‌ها داخل <span class="en">Docker image</span> نیست.
+</p>
+
+<h2>۲. مقدمه</h2>
+<p>
+دفترچه تعریف پروژه این سوال را می‌گذارد: آیا متن یک نظر فارسی هم وضعیت پیشنهاد کاربر را پیش‌بینی می‌کند و هم بازه امتیاز را، و آیا نظر بدون برچسب طبقه‌بند را بهتر می‌کند؟
+فاز ۱ اجباری است و شامل ممیزی داده، نرمال‌سازی فارسی، جلوگیری از نشت در سطح محصول، خط پایه <span class="en">TF-IDF</span>، یک <span class="en">transformer</span> تنظیم‌شده، و یک آزمایش <span class="en">semi-supervised</span> تکرارپذیر است.
+<span class="en">FastAPI</span> و <span class="en">Docker</span> فاز ۲ و اختیاری‌اند. در این پروژه هر دو فاز تا حدی جلو رفته‌اند، ولی آزمایش <span class="en">semi-supervised</span> فاز ۱ هنوز انجام نشده است.
+</p>
+<p>
+نمره به دقت مدل بسته نیست. گزارش مسیر را ثبت می‌کند: چه چیزی جواب داد، چه چیزی خطا داد، و کدام عددها را نباید با هم مقایسه کرد.
+دو پروتکل تقسیم در پروژه هست و یکی نیستند. یکی تقسیم گروهی محصول با سهم حدود ۷۰، ۱۵ و ۱۵ است. دیگری نمونه طبقه‌بندی‌شده ۲۰ درصد برای آموزش <span class="en">TookaBERT</span> روی سرور است و ۸۰ درصد کنار گذاشته می‌شود.
+</p>
+
+<h2>۳. فیلدهای داده</h2>
+<p>
+فایل عمومی <span class="en">RadeAI/Digikala_comments_products</span> است. ممیزی روی کل فایل انجام شد و سطری نمونه‌برداری نشد.
+فیلدهایی که مدل می‌خواند و فیلدهایی که فقط برای ساخت برچسب یا تقسیم‌اند در جدول زیرند.
+</p>
+<table>
+  <thead>
+    <tr><th class="r">ستون</th><th class="r">نقش</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="r"><span class="en">body</span></td><td class="r">تنها ورودی مدل</td></tr>
+    <tr><td class="r"><span class="en">recommendation_status</span></td><td class="r">برچسب پیشنهاد. سه مقدار <span class="en">recommended</span>، <span class="en">not_recommended</span>، <span class="en">no_idea</span>. تهی، مثال آموزش نیست</td></tr>
+    <tr><td class="r"><span class="en">rate</span></td><td class="r">فقط برای ساخت <span class="en">rating band</span>. خودش ویژگی نیست</td></tr>
+    <tr><td class="r"><span class="en">rating_band</span></td><td class="r"><span class="en">low</span>: ۰ تا ۲٫۵ · <span class="en">medium</span>: ۲٫۵ تا ۴ · <span class="en">high</span>: ۴ تا ۵. کدها ۰ و ۱ و ۲</td></tr>
+    <tr><td class="r"><span class="en">product_id</span></td><td class="r">فقط برای تقسیم گروهی. ویژگی مدل نیست</td></tr>
+    <tr><td class="r"><span class="en">id</span></td><td class="r">هویت سطر. بعد از حذف تکرار، یک سطر برای هر شناسه</td></tr>
+    <tr><td class="r"><span class="en">title</span>، مزایا، معایب، فروشنده، پسند، زمان</td><td class="r">خارج از ورودی. عنوان خالی با متن نظر پر نشد</td></tr>
+  </tbody>
+  <caption>فیلدهای دفترچه تعریف. مدل حق دیدن برچسب، امتیاز خام، و شناسه محصول را به‌عنوان ویژگی ندارد.</caption>
+</table>
+
+<h3>اندازه و کلاس‌ها</h3>
+<table>
+  <thead>
+    <tr><th class="r">مورد</th><th>مقدار</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="r">سطر خام</td><td>۶٬۱۵۶٬۲۸۹</td></tr>
+    <tr><td class="r">ستون</td><td>۱۵</td></tr>
+    <tr><td class="r">حجم فایل</td><td>۱٫۲۸ گیگابایت</td></tr>
+    <tr><td class="r"><span class="en">body</span> خالی</td><td>۶۳۷ سطر، یعنی ۰٫۰۱۰ درصد</td></tr>
+    <tr><td class="r">بدون <span class="en">recommendation</span></td><td>۸۹۴٬۴۲۶ سطر، ۱۴٫۵۳ درصد</td></tr>
+    <tr><td class="r">محصول یکتا در فایل خام</td><td>۳۳۱٬۵۹۹</td></tr>
+    <tr><td class="r">امتیاز خارج از ۰ تا ۵</td><td>یک سطر با <span class="en">rate</span> برابر ۲۵۰۰</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead>
+    <tr><th>کلاس</th><th>سطر</th><th>سهم برچسب‌دارها</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="en">recommended</span></td><td>۴٬۱۶۲٬۸۳۹</td><td>۷۹٫۱۱٪</td></tr>
+    <tr><td><span class="en">no_idea</span></td><td>۵۹۴٬۱۲۱</td><td>۱۱٫۲۹٪</td></tr>
+    <tr><td><span class="en">not_recommended</span></td><td>۵۰۴٬۹۰۳</td><td>۹٫۶۰٪</td></tr>
+  </tbody>
+  <caption>شمارش روی فایل خام. <span class="en">recommended</span> حدود هشت برابر <span class="en">not_recommended</span> است.</caption>
+</table>
+<table>
+  <thead>
+    <tr><th>بازه</th><th>سطر</th><th>سهم همه سطرها</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="en">high</span></td><td>۴٬۰۰۴٬۹۰۵</td><td>۶۵٫۰۵٪</td></tr>
+    <tr><td><span class="en">low</span></td><td>۱٬۰۹۲٬۳۲۹</td><td>۱۷٫۷۴٪</td></tr>
+    <tr><td><span class="en">medium</span></td><td>۱٬۰۵۹٬۰۵۴</td><td>۱۷٫۲۰٪</td></tr>
+    <tr><td><span class="en">invalid</span></td><td>۱</td><td>۰</td></tr>
+  </tbody>
+  <caption>بازه از <span class="en">rate</span> روی فایل خام. میانه امتیاز برای <span class="en">recommended</span> برابر ۴ و برای <span class="en">not_recommended</span> برابر ۱ است.</caption>
+</table>
+<p>
+هر غیرخریدار بدون برچسب پیشنهاد است: ۳۰۲٬۱۸۱ سطر. میان خریداران هم ۱۰٫۱۲ درصد برچسب ندارند.
+شلوغ‌ترین ۱۰ درصد محصول‌ها ۶۷٫۱۲ درصد نظرها را دارند. اگر تقسیم سطری باشد، یک محصول دو طرف برش می‌افتد. برای همین تقسیم خط پایه گروهی است.
+</p>
+
+<h2>۴. پاکسازی و پیش‌پردازش</h2>
+<p>
+گذر پاکسازی ستون‌های لازم را نگه داشت، <span class="en">body</span> خالی را حذف کرد، امتیاز را در بازه ۰ تا ۵ گذاشت، فاصله را یکدست کرد، و شناسه تکراری را برداشت.
+بعد از این گذر، ۶٬۱۵۲٬۴۲۲ سطر چهارستونی ماند و بازه امتیاز ۰ تا ۵ شد. متن تکراری حذف نشد، چون عبارت کوتاه مثل «عالی» می‌تواند نظر واقعی محصول‌های مختلف باشد.
+</p>
+<p>
+دو خط لوله متن در آزمایش‌های تمام‌شده هست. خط لوله مشترک، همان خروجی <span class="en">src/preprocess.py</span>، این کارها را می‌کند:
+نرمال <span class="en">NFKC</span>، نگاشت حرف عربی به فارسی، حذف اعراب، یک نیم‌فاصله درونی، حذف نشانی وب و ایمیل، تا کردن رقم به فارسی، محدود کردن تکرار یک نویسه به دو، و ریشه‌یابی با <span class="en">Hazm</span>.
+ایموجی و حرف لاتین می‌مانند. این متن، ورودی <span class="en">TF-IDF</span> و اجراهای اول <span class="en">Colab</span> است و ۵٬۲۵۸٬۳۴۲ سطر برچسب‌دار دارد.
+</p>
+<p>
+خط لوله نسخه ۲، در <span class="en">src/experiments/text_v2.py</span>، روی همان متن ریشه‌یابی‌شده سه مرحله دیگر دارد: حرف، بعد رقم، بعد ایموجی.
+توکنی که فقط رقم است حذف می‌شود. توکن مخلوط مثل <span class="en">A54</span> می‌ماند. ۲۰۷ سطر بعد از حذف ایموجی خالی شدند و کنار رفتند. نتیجه ۵٬۲۵۸٬۱۳۵ سطر است.
+دورهای سرور، جریمه <span class="en">no_idea</span>، و دور <span class="en">rating band</span> روی همین متن‌اند.
+<span class="en">XLM-RoBERTa</span> رقم فارسی را دوباره به <span class="en">ASCII</span> برمی‌گرداند، چون <span class="en">tokenizer</span> آن با رقم لاتین آموزش دیده است.
+</p>
+<div class="note">
+طول دنباله در آموزش <span class="en">transformer</span> برابر ۱۲۸ است. <span class="en">tokenizer</span> پارکت و <span class="en">TF-IDF</span> همان <span class="en">WordPiece</span> مدل <span class="en">HooshvareLab/bert-fa-base-uncased</span> است و سقف آن ۵۱۲ است. شناسه طبقه‌بند، جداکننده و پد از بردار <span class="en">TF-IDF</span> حذف شد. واژگان برازش‌شده ۳۴٬۱۸۵ عبارت است.
+</div>
+
+<h2>۵. خط پایه <span class="en">TF-IDF</span></h2>
+<p>
+<span class="en">notebooks/04-baseline.ipynb</span> روی پارکت توکن‌شده، با بذر ۲۰۲۶، تقسیم گروهی محصول ساخت: حدود ۷۰ درصد آموزش، ۱۵ درصد اعتبارسنجی، ۱۵ درصد آزمون. هیچ محصولی در بیش از یک بخش نبود. واژگان فقط روی آموزش برازش شد. طبقه‌بند <span class="en">LogisticRegression</span> با وزن کلاس متوازن، حل‌کننده <span class="en">saga</span> و حداکثر ۲۰۰ تکرار است.
+</p>
+<h3>پیشنهاد</h3>
+<p>
+آموزش ۳٬۶۸۰٬۸۲۸ سطر، اعتبارسنجی ۷۸۸٬۷۵۶ و آزمون ۷۸۸٬۷۵۸ سطر است.
+</p>
+<table>
+  <thead>
+    <tr><th>بخش</th><th><span class="en">accuracy</span></th><th><span class="en">balanced accuracy</span></th><th><span class="en">macro F1</span></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>اعتبارسنجی</td><td>۰٫۷۴۶۷</td><td>۰٫۶۸۱۷</td><td>۰٫۶۰۹۴</td></tr>
+    <tr><td>آزمون</td><td>۰٫۷۴۶۸</td><td>۰٫۶۸۲۴</td><td>۰٫۶۰۹۷</td></tr>
+  </tbody>
+  <caption>خط پایه پیشنهاد. وزن‌ها در <span class="en">models/recommendation-tfidf-logreg.joblib</span>.</caption>
+</table>
+<h3>بازه امتیاز</h3>
+<p>
+همین روش روی هر سه بازه، با ۴٬۳۰۶٬۵۲۲ سطر آموزش، این سنجه آزمون را داد: <span class="en">accuracy</span> برابر ۰٫۶۳۱۹، <span class="en">balanced accuracy</span> برابر ۰٫۵۶۹۷، <span class="en">macro F1</span> برابر ۰٫۵۴۹۲، و خطای فاصله ترتیبی ۰٫۴۸۶۶.
+<span class="en">F1</span> آزمون برای <span class="en">low</span> برابر ۰٫۴۸۵۴، برای <span class="en">medium</span> برابر ۰٫۴۰۶۰ و برای <span class="en">high</span> برابر ۰٫۷۵۶۲ است. بازه وسط سخت‌ترین کلاس است.
+فایل وزن <span class="en">models/rating-band-tfidf-logreg.joblib</span> است.
+</p>
+
+<h2>۶. تنظیم دقیق روی کل داده برچسب‌دار</h2>
+<p>
+چهار دفترچه <span class="en">Colab</span> روی مجموعه برچسب‌دار کامل، یک دور آموزش دیدند. طول ۱۲۸، اندازه دسته ۱۶، انباشت گرادیان ۲، و بذر ۲۰۲۶ مشترک است.
+مرحله <span class="en">head</span> رمزگذار را منجمد می‌کند و سر تازه را با نرخ یادگیری <span class="en">1e-3</span> آموزش می‌دهد.
+مرحله بلوک آخر، همان سر را بار می‌کند و آخرین بلوک را با نرخ <span class="en">2e-5</span> و سر را با نرخ <span class="en">1e-4</span> آموزش می‌دهد.
+زیان، <span class="en">cross-entropy</span> با وزن کلاس است. یک دور ۱۱۵٬۰۲۷ گام است.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>مدل</th><th>مرحله</th><th>بخش</th>
+      <th><span class="en">accuracy</span></th><th><span class="en">macro precision</span></th>
+      <th><span class="en">macro recall</span></th><th><span class="en">macro F1</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="en">ParsBERT</span></td><td><span class="en">head</span></td><td>اعتبارسنجی</td><td>۰٫۷۳۴۰</td><td>۰٫۵۴۴۵</td><td>۰٫۶۳۸۹</td><td>۰٫۵۷۱۵</td></tr>
+    <tr><td><span class="en">ParsBERT</span></td><td>بلوک آخر</td><td>اعتبارسنجی</td><td>۰٫۸۰۰۴</td><td>۰٫۶۳۹۵</td><td>۰٫۷۲۶۶</td><td>۰٫۶۶۸۷</td></tr>
+    <tr><td><span class="en">ParsBERT</span></td><td>بلوک آخر</td><td>آزمون</td><td>۰٫۸۰۰۰</td><td>۰٫۶۳۹۰</td><td>۰٫۷۲۶۳</td><td>۰٫۶۶۸۲</td></tr>
+    <tr><td><span class="en">XLM-RoBERTa</span></td><td><span class="en">head</span></td><td>اعتبارسنجی</td><td>۰٫۷۱۳۵</td><td>۰٫۵۳۰۰</td><td>۰٫۶۲۷۱</td><td>۰٫۵۵۴۰</td></tr>
+    <tr><td><span class="en">XLM-RoBERTa</span></td><td>بلوک آخر</td><td>اعتبارسنجی</td><td>۰٫۷۹۸۹</td><td>۰٫۶۳۲۹</td><td>۰٫۷۲۰۵</td><td>۰٫۶۶۳۰</td></tr>
+    <tr><td><span class="en">XLM-RoBERTa</span></td><td>بلوک آخر</td><td>آزمون</td><td>۰٫۷۹۹۳</td><td>۰٫۶۳۳۴</td><td>۰٫۷۲۱۴</td><td>۰٫۶۶۳۷</td></tr>
+    <tr><td><span class="en">TookaBERT</span></td><td><span class="en">head</span></td><td>اعتبارسنجی</td><td>۰٫۷۴۵۶</td><td>۰٫۵۴۴۴</td><td>۰٫۶۳۱۰</td><td>۰٫۵۷۱۸</td></tr>
+    <tr><td><span class="en">TookaBERT</span></td><td><span class="en">head</span></td><td>آزمون</td><td>۰٫۷۴۵۰</td><td>۰٫۵۴۳۵</td><td>۰٫۶۳۰۱</td><td>۰٫۵۷۰۷</td></tr>
+    <tr><td><span class="en">TookaBERT</span></td><td>بلوک آخر</td><td>اعتبارسنجی</td><td>۰٫۸۰۵۳</td><td>۰٫۶۴۲۰</td><td>۰٫۷۲۸۹</td><td>۰٫۶۷۲۲</td></tr>
+  </tbody>
+  <caption>آزاد کردن بلوک آخر، <span class="en">macro F1</span> را حدود ۰٫۱۰ بالا برد. میان سه مدل، <span class="en">TookaBERT</span> بالاترین اعتبارسنجی را دارد.</caption>
+</table>
+<p>
+<span class="en">F1</span> کلاس <span class="en">recommended</span> در بلوک آخر نزدیک ۰٫۹۰ است. <span class="en">not_recommended</span> نزدیک ۰٫۶۸ تا ۰٫۷۰ است. <span class="en">no_idea</span> نزدیک ۰٫۴۱ تا ۰٫۴۲ می‌ماند.
+برای <span class="en">TookaBERT</span> فایل آزمون بلوک آخر ساخته نشد. فایل <span class="en">test_metrics.json</span> داخل <span class="en">best/</span> هنوز سنجه مرحله <span class="en">head</span> است، با <span class="en">macro F1</span> برابر ۰٫۵۷۰۷. این یک نقص ذخیره است، نه یک نتیجه آزمون تازه.
+فایل سنجه <span class="en">head</span> برای <span class="en">XLM-RoBERTa</span> و <span class="en">TookaBERT</span> بعد از خطای ذخیره فقط جمله <span class="en">saved after the scoring crash</span> را دارد. عددهای آن دو مرحله از چاپ دفترچه آمده‌اند.
+</p>
+<h3>شکست <span class="en">Shiraz</span></h3>
+<p>
+<span class="en">notebooks/colab/04-shiraz-finetune.ipynb</span> مدل <span class="en">lifeweb-ai/shiraz</span> را بار کرد و ۱٬۵۳۹ پارامتر قابل آموزش سر را چاپ کرد.
+سپس آموزش با <span class="en">TypeError</span> ایستاد، چون <span class="en">Trainer</span> آرگومان <span class="en">tokenizer</span> را قبول نکرد.
+سلول ذخیره هم <span class="en">NameError</span> داد، چون <span class="en">DRIVE_DIR</span> تعریف نشده بود.
+چک‌پوینت، سنجه اعتبارسنجی، و پوشه <span class="en">best</span> برای این مدل وجود ندارد. این مدل نقطه شروع آزمایش بعدی نیست.
+</p>
+
+<h2>۷. چهار بلوک بالا روی ۱۰ درصد داده</h2>
+<p>
+<span class="en">notebooks/colab3/</span> همان وزن بلوک آخر را برداشت و چهار بلوک بالای رمزگذار را روی یک برش تصادفی ۱۰ درصد آموزش داد.
+این پوشه‌ها جدا از <span class="en">best/</span> داده کامل هستند و جایگزین آن نمی‌شوند.
+<span class="en">TookaBERT</span> دور ۲ را نگه داشت و <span class="en">ParsBERT</span> دور ۱ را. دورهای بعدی <span class="en">macro F1</span> اعتبارسنجی پایین‌تری داشتند.
+در لاگ، بعضی دورهای بعدی دقیقاً عدد دور قبلی را تکرار می‌کنند و یک دور <span class="en">TookaBERT</span> شماره ۳ ندارد. آن تکرارها به‌عنوان دور تازه حساب نشدند.
+</p>
+<table>
+  <thead>
+    <tr><th>مدل</th><th>دور نگه‌داشته</th><th>بخش</th><th><span class="en">accuracy</span></th><th><span class="en">macro F1</span></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="en">TookaBERT</span></td><td>۲</td><td>اعتبارسنجی</td><td>۰٫۸۱۵۵</td><td>۰٫۶۸۲۵</td></tr>
+    <tr><td><span class="en">TookaBERT</span></td><td>۲</td><td>آزمون</td><td>۰٫۸۱۷۳</td><td>۰٫۶۸۶۷</td></tr>
+    <tr><td><span class="en">ParsBERT</span></td><td>۱</td><td>اعتبارسنجی</td><td>۰٫۸۰۹۵</td><td>۰٫۶۷۷۸</td></tr>
+    <tr><td><span class="en">ParsBERT</span></td><td>۱</td><td>آزمون</td><td>۰٫۸۱۰۹</td><td>۰٫۶۸۱۶</td></tr>
+  </tbody>
+  <caption>روی این برش کوچک، هر دو مدل از بلوک آخر داده کامل بالاترند. این مقایسه مستقیم نیست، چون مجموعه آزمون کوچک‌تر و تصادفی است.</caption>
+</table>
+<p>
+<span class="en">F1</span> آزمون <span class="en">TookaBERT</span> برای سه کلاس ۰٫۹۰۶۲ و ۰٫۷۱۳۱ و ۰٫۴۴۰۹ است. <span class="en">no_idea</span> هنوز نزدیک ۰٫۴۴ است.
+دفترچه‌های <span class="en">notebooks/colab2/</span> برای چهار بلوک بالا، همه بلوک‌ها، و وزن <span class="en">no_idea</span> نوشته شدند و اجرا نشدند. وزن آموزش‌دیده ندارند.
+</p>
+
+<h2>۸. مدل منتشرشده احساس، بدون آموزش تازه</h2>
+<p>
+<span class="en">HooshvareLab/bert-fa-base-uncased-sentiment-digikala</span> روی هر ۵٬۲۵۸٬۳۴۲ نظر برچسب‌دار همین پروژه امتیاز گرفت. این اجرا آموزش نیست.
+<span class="en">accuracy</span> برابر ۰٫۷۴۰۳ و <span class="en">macro F1</span> برابر ۰٫۵۹۱۸ است.
+<span class="en">F1</span> کلاس‌ها ۰٫۸۵۵۸ و ۰٫۶۰۵۲ و ۰٫۳۱۴۴ است.
+کارت مدل دقت ۰٫۸۲۶۸ را برای آزمون خودش روی ۶۲٬۳۲۱ نظر گفته بود. آن عدد روی داده این پروژه تکرار نشد. <span class="en">no_idea</span> این مدل از مدل‌های تنظیم‌شده پروژه ضعیف‌تر است.
+</p>
+
+<h2>۹. <span class="en">TookaBERT</span> با پیش‌پردازش نسخه ۲</h2>
+<p>
+در ۲۱ آبان ۱۴۰۵، <span class="en">src/experiments/tookabert_v2.py</span> از وزن <span class="en">best/PartAI--TookaBERT-Base</span> شروع کرد.
+چهار بلوک بالا قابل آموزش بودند. آموزش روی ۲۰ درصد طبقه‌بندی‌شده از ۵٬۲۵۸٬۱۳۵ سطر، با بذر ۲۰۲۶، یعنی ۱٬۰۵۱٬۶۲۷ نظر بود.
+۸۰ درصد کنارگذاشته، ۴٬۲۰۶٬۵۰۸ سطر، وارد آموزش نشد و ملاک انتخاب دور است.
+از ۵٬۲۵۸٬۱۳۵ سطر برچسب‌دار، ۴٬۱۶۰٬۰۵۰ تا <span class="en">recommended</span>، ۵۰۴٬۴۵۲ تا <span class="en">not_recommended</span> و ۵۹۳٬۶۳۳ تا <span class="en">no_idea</span> هستند.
+</p>
+<table>
+  <thead>
+    <tr><th>دور</th><th>بخش</th><th><span class="en">accuracy</span></th><th><span class="en">macro F1</span></th><th><span class="en">micro F1</span></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>۱</td><td>کنارگذاشته ۸۰٪</td><td>۰٫۸۳۰۵</td><td>۰٫۶۹۶۵</td><td>۰٫۸۳۰۵</td></tr>
+    <tr><td>۲</td><td>کنارگذاشته ۸۰٪</td><td>۰٫۸۳۱۲</td><td>۰٫۶۹۷۲</td><td>۰٫۸۳۱۲</td></tr>
+    <tr><td>۳</td><td>کنارگذاشته ۸۰٪</td><td>۰٫۸۲۸۹</td><td>۰٫۶۹۲۷</td><td>۰٫۸۲۸۹</td></tr>
+    <tr><td>۴</td><td>کنارگذاشته ۸۰٪</td><td>۰٫۸۲۷۰</td><td>۰٫۶۸۸۱</td><td>۰٫۸۲۷۰</td></tr>
+    <tr><td>۵</td><td>کنارگذاشته ۸۰٪</td><td>۰٫۸۲۶۰</td><td>۰٫۶۸۴۰</td><td>۰٫۸۲۶۰</td></tr>
+    <tr><td>۲</td><td>کل برچسب‌دار</td><td>۰٫۸۳۳۰</td><td>۰٫۷۰۱۰</td><td>۰٫۸۳۳۰</td></tr>
+  </tbody>
+  <caption>دور ۲ بهترین <span class="en">macro F1</span> کنارگذاشته است. عدد کل برچسب‌دار، سطرهای آموزش را هم شامل می‌شود و برای انتخاب مدل استفاده نشد.</caption>
+</table>
+<p>
+<span class="en">F1</span> کنارگذاشته دور ۲ برای سه کلاس ۰٫۹۱۶۰ و ۰٫۷۲۱۷ و ۰٫۴۵۳۸ است. این بالاترین <span class="en">no_idea</span> در اجراهای تنظیم‌شده بزرگ است، ولی هنوز کلاس ضعیف است.
+زیان آموزش ثبت‌شده از دور ۱ تا ۵ بالا رفت: ۱٫۰۸۱۰، ۱٫۰۹۵۴، ۱٫۱۶۱۵، ۱٫۲۴۲۳ و ۱٫۳۴۲۰. همزمان سنجه کنارگذاشته بعد از دور ۲ افت کرد. این نشانه ادامه بیهوده آموزش است، نه بهبود.
+دور ۶ شروع شد و سنجیده نشد.
+</p>
+<div class="fig">
+  <div class="row"><div class="name">TF-IDF test</div><div class="track"><div class="bar" style="width:87.4%"></div></div><div class="val">0.610</div></div>
+  <div class="row"><div class="name">published sentiment</div><div class="track"><div class="bar" style="width:84.8%"></div></div><div class="val">0.592</div></div>
+  <div class="row"><div class="name">TookaBERT head</div><div class="track"><div class="bar" style="width:82.0%"></div></div><div class="val">0.572</div></div>
+  <div class="row"><div class="name">XLM-R last block</div><div class="track"><div class="bar" style="width:95.1%"></div></div><div class="val">0.663</div></div>
+  <div class="row"><div class="name">ParsBERT last block</div><div class="track"><div class="bar" style="width:95.9%"></div></div><div class="val">0.669</div></div>
+  <div class="row"><div class="name">TookaBERT last block</div><div class="track"><div class="bar" style="width:96.4%"></div></div><div class="val">0.672</div></div>
+  <div class="row"><div class="name">10% TookaBERT test</div><div class="track"><div class="bar" style="width:98.5%"></div></div><div class="val">0.687</div></div>
+  <div class="row"><div class="name">v2 epoch 2 held-out</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="val">0.697</div></div>
+  <div class="caption">شکل ۱. <span class="en">macro F1</span> پیشنهاد. طول میله نسبت به ۰٫۶۹۷ است. بخش‌ها یکی نیستند. فقط برای دیدن ترتیب کلی است، نه برای اعلام یک برنده واحد.</div>
+</div>
+
+<h2>۱۰. جریمه کلاس <span class="en">no_idea</span></h2>
+<p>
+ایده این بود که دور ۲ بهترین <span class="en">macro F1</span> را دارد، ولی هنوز ۲۰۷٬۴۲۲ سطر <span class="en">no_idea</span> در مجموعه کنارگذاشته را اشتباه می‌گوید.
+<span class="en">src/experiments/tookabert_noidea_penalty.py</span> از همان وزن دور ۲ شروع کرد و روی همان ۱٬۰۵۱٬۶۲۷ نظر، سه دور با جریمه این کلاس آموزش دید.
+مسیر جدا است و وزن‌های نسخه ۲ را عوض نمی‌کند.
+</p>
+<table>
+  <thead>
+    <tr><th>دور این اجرا</th><th><span class="en">accuracy</span></th><th><span class="en">macro F1</span></th><th><span class="en">no_idea</span> recall</th><th><span class="en">no_idea</span> F1</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>مبدأ، دور ۲ نسخه ۲</td><td>۰٫۸۳۱۲</td><td>۰٫۶۹۷۲</td><td>۰٫۵۶۳۲</td><td>۰٫۴۵۳۸</td></tr>
+    <tr><td>۱</td><td>۰٫۷۹۴۶</td><td>۰٫۶۷۷۶</td><td>۰٫۶۸۵۹</td><td>۰٫۴۴۳۴</td></tr>
+    <tr><td>۲</td><td>۰٫۷۹۶۱</td><td>۰٫۶۷۴۹</td><td>۰٫۶۶۳۸</td><td>۰٫۴۳۹۰</td></tr>
+    <tr><td>۳</td><td>۰٫۷۹۸۶</td><td>۰٫۶۷۳۳</td><td>۰٫۶۳۹۲</td><td>۰٫۴۳۴۹</td></tr>
+  </tbody>
+  <caption>همه عددها روی همان ۸۰ درصد کنارگذاشته است. جریمه، یادآوری <span class="en">no_idea</span> را در دور ۱ بالا برد و <span class="en">macro F1</span> را پایین آورد.</caption>
+</table>
+<p>
+زیان آموزش از ۱٫۶۸۹۸ در دور ۱ به ۱٫۷۸۵۶ و بعد ۱٫۹۴۶۰ رسید. میان سه دور، دور ۱ بهترین <span class="en">macro F1</span> این اجرا را دارد و باز هم ۰٫۰۱۹۶ از مبدأ پایین‌تر است.
+پس این مسیر برای بالا بردن معیار اصلی شکست خورد. فقط نشان داد که یادآوری کلاس سخت را می‌شود گران‌تر کرد، به قیمت دقت کلی.
+</p>
+
+<h2>۱۱. بازه امتیاز با <span class="en">TookaBERT</span></h2>
+<p>
+سر پیشنهاد دور ۲ کنار گذاشته شد و یک لایه تازه سه‌کلاسه برای <span class="en">low</span>، <span class="en">medium</span> و <span class="en">high</span> گذاشته شد.
+مقدار اولیه این لایه <span class="en">Normal(0, 0.02)</span> با بذر ۲۰۲۶ و بایاس صفر بود. این نسخه آموزش‌ندیده در <span class="en">experiments/baselines/tookabert-epoch2-rating-band</span> است و سنجه ندارد.
+</p>
+<p>
+<span class="en">notebooks/colab/07-tookabert-rating-band.ipynb</span> یک دور از همان نقطه آموزش دید.
+جدول آماده ۵٬۲۵۸٬۱۳۵ سطر بود: ۳٬۳۱۹٬۹۱۷ تا <span class="en">high</span>، ۹۹۰٬۹۸۴ تا <span class="en">low</span> و ۹۴۷٬۲۳۴ تا <span class="en">medium</span>.
+تقسیم دفترچه: آموزش ۳٬۶۸۰٬۶۹۲، اعتبارسنجی ۷۸۸٬۷۱۹، آزمون ۷۸۸٬۷۲۴.
+وزن کلاس‌ها به ترتیب <span class="en">low</span>، <span class="en">medium</span> و <span class="en">high</span> برابر ۱٫۷۶۸۷ و ۱٫۸۵۰۳ و ۰٫۵۲۷۹ بود.
+پارامتر قابل آموزش ۲۸٬۳۵۳٬۷۹۵ تا بود. ۵۷٬۵۱۱ گام در ۲ ساعت و ۵۲ دقیقه تمام شد. زیان آموزش ۰٫۸۸۲۸ بود.
+</p>
+<table>
+  <thead>
+    <tr><th>مدل</th><th>بخش</th><th><span class="en">accuracy</span></th><th><span class="en">macro F1</span></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="en">TF-IDF</span></td><td>آزمون</td><td>۰٫۶۳۱۹</td><td>۰٫۵۴۹۲</td></tr>
+    <tr><td><span class="en">TookaBERT</span> یک دور</td><td>اعتبارسنجی</td><td>۰٫۶۵۹۰</td><td>۰٫۵۸۳۶</td></tr>
+    <tr><td><span class="en">TookaBERT</span> یک دور</td><td>آزمون</td><td>۰٫۶۵۷۷</td><td>۰٫۵۸۲۲</td></tr>
+  </tbody>
+  <caption>تقسیم‌ها هر دو گروهی یا نزدیک ۷۰ و ۱۵ و ۱۵ هستند، ولی جدول آماده و خط لوله متن یکی نیست. تفاوت حدود ۰٫۰۳ در <span class="en">macro F1</span> به نفع <span class="en">transformer</span> است.</caption>
+</table>
+<table>
+  <thead>
+    <tr><th>بخش</th><th>کلاس</th><th><span class="en">precision</span></th><th><span class="en">recall</span></th><th><span class="en">F1</span></th><th>پشتیبان</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>اعتبارسنجی</td><td><span class="en">low</span></td><td>۰٫۵۵۰۸</td><td>۰٫۵۱۵۱</td><td>۰٫۵۳۲۴</td><td>۱۴۸٬۶۴۷</td></tr>
+    <tr><td>اعتبارسنجی</td><td><span class="en">medium</span></td><td>۰٫۳۷۹۱</td><td>۰٫۵۳۳۷</td><td>۰٫۴۴۳۳</td><td>۱۴۲٬۰۸۵</td></tr>
+    <tr><td>اعتبارسنجی</td><td><span class="en">high</span></td><td>۰٫۸۱۶۹</td><td>۰٫۷۳۷۷</td><td>۰٫۷۷۵۳</td><td>۴۹۷٬۹۸۷</td></tr>
+    <tr><td>آزمون</td><td><span class="en">low</span></td><td>۰٫۵۵۱۱</td><td>۰٫۵۱۲۳</td><td>۰٫۵۳۱۰</td><td>۱۴۸٬۶۴۹</td></tr>
+    <tr><td>آزمون</td><td><span class="en">medium</span></td><td>۰٫۳۷۷۳</td><td>۰٫۵۳۱۵</td><td>۰٫۴۴۱۳</td><td>۱۴۲٬۰۸۶</td></tr>
+    <tr><td>آزمون</td><td><span class="en">high</span></td><td>۰٫۸۱۵۱</td><td>۰٫۷۳۷۱</td><td>۰٫۷۷۴۲</td><td>۴۹۷٬۹۸۹</td></tr>
+  </tbody>
+  <caption>بازه <span class="en">medium</span> در <span class="en">transformer</span> هم مثل <span class="en">TF-IDF</span> ضعیف‌ترین کلاس است. وزن‌ها در <span class="en">experiments/PartAI--TookaBERT-Base--rating-band</span>.</caption>
+</table>
+<p>
+در همان اجرا، کارت گرافیک حدود ۱۵ گیگابایت حافظه داشت و مصرف دیده‌شده خیلی کمتر از سقف بود. یک دور با این تنظیم حدود سه ساعت طول کشید. مدل تمام شد و سنجیده شد، ولی از ظرفیت دستگاه خوب استفاده نشد.
+</p>
+
+<h2>۱۲. رگرسیون امتیاز خام</h2>
+<p>
+پیش‌بینی خود <span class="en">rate</span> در تعریف پروژه اختیاری است و نباید جای <span class="en">rating band</span> را بگیرد.
+<span class="en">src/experiments/tookabert_regression_baseline.py</span> سر سه‌کلاسه دور ۲ را با یک لایه یک‌خروجی عوض کرد.
+وزن تازه از <span class="en">Normal(0, 0.02)</span> با بذر ۲۰۲۶ آمد و بایاس صفر است.
+فایل در <span class="en">experiments/baselines/tookabert-epoch2-regression</span> است و <span class="en">trained</span> آن نادرست است.
+دفترچه آموزش این لایه نوشته شد و اجرا نشد. <span class="en">MAE</span> و <span class="en">RMSE</span> و <span class="en">R²</span> وجود ندارد.
+</p>
+
+<h2>۱۳. آزمایش <span class="en">semi-supervised</span> انجام نشده است</h2>
+<p>
+پروتکل اجباری این است. بعد از تقسیم گروهی، داخل هر کلاس پیشنهاد در بخش آموزش، دقیقاً ۲۰ درصد سطر با درهم‌ساز پایدار پوشیده شود.
+بذر تقسیم ۲۰۲۶ است. رشته ماسک <span class="en">digikala-semi-supervised-v1</span> است.
+فایل ماسک برای آموزش فقط <span class="en">id</span> و <span class="en">body</span> دارد.
+مدل نظارت‌شده روی بقیه آموزش تنظیم می‌شود، بعد فقط پیش‌بینی‌هایی را که احتمال کلاس برترشان حداقل ۰٫۹۰ است به‌عنوان <span class="en">pseudo-label</span> نگه می‌دارد.
+یک کپی از همان مدل روی آموزش نظارت‌شده به‌علاوه این سطرها ادامه پیدا می‌کند. زیان <span class="en">rating band</span> روی سطرهای شبه‌برچسب خاموش است.
+مقایسه دو مدل باید روی همان اعتبارسنجی و آزمون باشد. برچسب واقعی سطرهای ماسک فقط بعد از آموزش، برای حساب کردن دقت شبه‌برچسب، دیده می‌شود.
+</p>
+<div class="note">
+این آزمایش اجرا نشده است. <span class="en">train_supervised.csv</span>، <span class="en">train_pseudo_unlabeled.csv</span> و <span class="en">split_manifest.json</span> در پروژه نیستند.
+<span class="en">notebooks/colab/06-tookabert-semi-supervised.ipynb</span> نوشته شده و هیچ سلول آن اجرا نشده است.
+خود دفترچه هم پروتکل دیگری دارد: سطرهایی را برمی‌دارد که از اول <span class="en">recommendation_status</span> ندارند، نه ۲۰ درصد ماسک‌شده از آموزش برچسب‌دار. آستانه ۰٫۹۰ هم در آن نیست.
+جریمه <span class="en">no_idea</span> هم جایگزین این آزمایش نیست، چون برچسب واقعی را دارد و شبه‌برچسب نمی‌سازد.
+</div>
+
+<h2>۱۴. مقایسه مسیرها</h2>
+<table>
+  <thead>
+    <tr><th class="r">مسیر</th><th class="r">نتیجه</th><th class="r">تصمیم</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="r">سر منجمد</td><td class="r"><span class="en">macro F1</span> حدود ۰٫۵۵ تا ۰٫۵۷</td><td class="r">از خط پایه کامل ضعیف‌تر یا نزدیک آن. کافی نیست</td></tr>
+    <tr><td class="r">آزاد کردن بلوک آخر</td><td class="r">پرش به حدود ۰٫۶۶ تا ۰٫۶۷</td><td class="r">گام مؤثر. <span class="en">TookaBERT</span> بهترین این سه</td></tr>
+    <tr><td class="r">چهار بلوک بالا روی ۱۰٪</td><td class="r">آزمون تا ۰٫۶۸۶۷</td><td class="r">امیدوارکننده، ولی مجموعه کوچک است و وزن اصلی را عوض نکرد</td></tr>
+    <tr><td class="r">پنج دور روی ۲۰٪ با متن نسخه ۲</td><td class="r">اوج در دور ۲، سپس افت</td><td class="r">دور ۲ مبدأ ادامه کار شد. دور ۶ سنجیده نشد</td></tr>
+    <tr><td class="r">جریمه <span class="en">no_idea</span></td><td class="r">یادآوری بالا، <span class="en">macro F1</span> پایین</td><td class="r">برای معیار اصلی ناموفق</td></tr>
+    <tr><td class="r">مدل احساس منتشرشده</td><td class="r"><span class="en">macro F1</span> برابر ۰٫۵۹۱۸</td><td class="r">از تنظیم پروژه ضعیف‌تر. آموزش این پروژه لازم بود</td></tr>
+    <tr><td class="r"><span class="en">Shiraz</span></td><td class="r">خطا قبل از ذخیره</td><td class="r">ناموفق. وزن ندارد</td></tr>
+    <tr><td class="r">یک دور <span class="en">rating band</span></td><td class="r">بهتر از <span class="en">TF-IDF</span></td><td class="r">موفق نسبت به خط پایه. <span class="en">medium</span> هنوز ضعیف است</td></tr>
+    <tr><td class="r">رگرسیون <span class="en">rate</span></td><td class="r">فقط لایه تصادفی</td><td class="r">شروع شد و آموزش نخورد</td></tr>
+    <tr><td class="r"><span class="en">semi-supervised</span></td><td class="r">دفترچه اجرا نشده</td><td class="r">الزام فاز ۱ هنوز باز است</td></tr>
+  </tbody>
+</table>
+<p>
+الگوی ثابت خطا این است. مدل کلاس بزرگ را خوب یاد می‌گیرد. کلاس کوچک و مبهم، یعنی <span class="en">no_idea</span> در پیشنهاد و <span class="en">medium</span> در بازه امتیاز، منبع اصلی افت <span class="en">macro F1</span> است.
+اضافه کردن دور، بعد از نقطه اوج، زیان آموزش را بالا برد و سنجه کنارگذاشته را پایین آورد.
+</p>
+
+<h2>۱۵. سرویس و پایش</h2>
+<p>
+فاز ۲ اختیاری بعد از آزمایش‌ها ساخته شد. <span class="en">src/api</span> برای هر چک‌پوینت حاضر روی دیسک مسیر جدا دارد.
+سیزده مدل ثبت می‌شوند: پنج دور نسخه ۲، سه دور جریمه، مدل آموزش‌دیده بازه امتیاز، دو سر آموزش‌ندیده، و دو مدل <span class="en">TF-IDF</span>.
+پیش‌بینی تا <span class="en">POST /models/{id}/load</span> کد ۴۰۹ می‌دهد.
+مسیر خام، خط لوله مخصوص همان مدل را خودش اجرا می‌کند. مسیر <span class="en">predict</span> متن را از قبل آماده‌شده فرض می‌کند.
+هر مسیر پیش‌پردازش، <span class="en">tokenizer</span>، <span class="en">embedding</span> و پیش‌بینی، نسخه دسته‌ای هم دارد. سقف دسته ۳۲ متن است.
+</p>
+<p>
+وزن‌ها داخل <span class="en">image</span> نیستند. حجم <span class="en">experiments/</span> حدود ۱۰ گیگابایت است و هر <span class="en">model.safetensors</span> حدود ۴۶۹ مگابایت است.
+<span class="en">Docker Compose</span> این پوشه را فقط‌خواندنی سوار می‌کند. فایل بهینه‌ساز آموزش سرو نمی‌شود.
+<span class="en">Prometheus</span> هر پنج ثانیه <span class="en">GET /metrics</span> را می‌خواند و <span class="en">Grafana</span> تأخیر، شمار پیش‌بینی، برچسب خروجی، زمان بار مدل، و متن خالی را نشان می‌دهد.
+ورود داشبورد <span class="en">admin / admin</span> است. این بخش محصول‌سازی است و سنجه مدل را عوض نمی‌کند.
+</p>
+
+<h2>۱۶. نتیجه‌گیری</h2>
+<p>
+متن نظر، هر دو برچسب را بهتر از حدس کلاس اکثریت یاد می‌دهد، به شرطی که رمزگذار کمی آموزش ببیند و معیار <span class="en">macro F1</span> باشد نه <span class="en">accuracy</span>.
+بهترین نقطه نظارت‌شده برای پیشنهاد، دور ۲ از <span class="en">TookaBERT</span> با پیش‌پردازش نسخه ۲ است. ادامه‌دادن دور و سنگین‌کردن <span class="en">no_idea</span> این عدد را بهتر نکرد.
+برای بازه امتیاز، یک دور همان رمزگذار از <span class="en">TF-IDF</span> جلو زد، ولی بازه وسط هنوز ضعیف است.
+</p>
+<p>
+کار ناتمام فاز ۱ مشخص است. آزمایش <span class="en">semi-supervised</span> باید با ماسک ۲۰ درصد، آستانه ۰٫۹۰، و مقایسه روی همان آزمون انجام شود.
+آزمون بلوک آخر <span class="en">TookaBERT</span> روی داده کامل باید دوباره ذخیره شود، چون فایل موجود هنوز سنجه سر است.
+رگرسیون <span class="en">rate</span> اگر لازم شد، از لایه ساخته‌شده شروع می‌کند و هنوز عددی برای گزارش ندارد.
+<span class="en">Shiraz</span> فقط بعد از رفع خطای <span class="en">Trainer</span> و ذخیره یک دور قابل مقایسه است.
+</p>
+<p class="src">
+عددهای این گزارش از خروجی دفترچه‌ها و فایل‌های <span class="en">metrics.json</span> آمده‌اند.
+جزئیات شمارش و مسیر فایل در <span class="en">reports/en/00-report.md</span> و <span class="en">reports/fa/00-report.md</span> است.
+</p>
+
+</body>
+</html>
