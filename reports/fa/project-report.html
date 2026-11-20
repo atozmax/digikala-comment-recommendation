@@ -140,6 +140,36 @@
   </div>
 </section>
 
+<h2>بهترین نتیجه</h2>
+<p>
+کد پروژه: <span class="en">https://github.com/atozmax/digikala-comment-recommendation</span>
+</p>
+<p>
+بهترین سنجه ثبت‌شده برای پیشنهاد، دور ۲ از <span class="en">TookaBERT</span> با پیش‌پردازش نسخه ۲ است.
+این عدد روی همه سطرهای برچسب‌دار بعد از گذر حرف، رقم و ایموجی حساب شده است: ۵٬۲۵۸٬۱۳۵ سطر.
+فایل سنجه <span class="en">experiments/epochs/epoch-2/metrics.json</span> است و برچسب بخش آن <span class="en">full_labeled</span> است.
+این مجموعه سطرهای آموزش را هم شامل می‌شود. سنجه کنارگذاشته، که سطر آموزش در آن نیست، پایین‌تر است: <span class="en">accuracy</span> برابر ۰٫۸۳۱۲ و <span class="en">macro F1</span> برابر ۰٫۶۹۷۲ روی ۴٬۲۰۶٬۵۰۸ سطر.
+</p>
+<table>
+  <thead>
+    <tr><th>بخش</th><th>سطر</th><th><span class="en">accuracy</span></th><th><span class="en">macro F1</span></th><th><span class="en">micro F1</span></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>همه برچسب‌دارها</td><td>۵٬۲۵۸٬۱۳۵</td><td>۰٫۸۳۳۰</td><td>۰٫۷۰۱۰</td><td>۰٫۸۳۳۰</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead>
+    <tr><th>کلاس</th><th><span class="en">precision</span></th><th><span class="en">recall</span></th><th><span class="en">F1</span></th><th>پشتیبان</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="en">recommended</span></td><td>۰٫۹۶۰۷</td><td>۰٫۸۷۶۵</td><td>۰٫۹۱۶۷</td><td>۴٬۱۶۰٬۰۵۰</td></tr>
+    <tr><td><span class="en">not_recommended</span></td><td>۰٫۶۷۸۱</td><td>۰٫۷۸۳۳</td><td>۰٫۷۲۶۹</td><td>۵۰۴٬۴۵۲</td></tr>
+    <tr><td><span class="en">no_idea</span></td><td>۰٫۳۸۴۶</td><td>۰٫۵۶۹۹</td><td>۰٫۴۵۹۳</td><td>۵۹۳٬۶۳۳</td></tr>
+  </tbody>
+  <caption>دور ۲، کل داده برچسب‌دار. فایل سنجه زیان ندارد.</caption>
+</table>
+
 <h2>۱. چکیده</h2>
 <p>
 تنها ورودی مدل، ستون <span class="en">body</span> است. دو برچسب لازم است.
@@ -157,10 +187,99 @@
 خط پایه <span class="en">TF-IDF</span> با <span class="en">logistic regression</span> ساخته شد.
 سپس چند <span class="en">transformer</span> فارسی و چندزبانه تنظیم دقیق شدند:
 <span class="en">ParsBERT</span>، <span class="en">XLM-RoBERTa</span> و <span class="en">TookaBERT</span>.
-بهترین سنجه توصیه‌ای که روی داده کنارگذاشته و بزرگ حساب شد، دور ۲ از <span class="en">TookaBERT</span> با پیش‌پردازش نسخه ۲ است:
-<span class="en">accuracy</span> برابر ۰٫۸۳۱۲ و <span class="en">macro F1</span> برابر ۰٫۶۹۷۲ روی ۴٬۲۰۶٬۵۰۸ سطر.
+بهترین سنجه توصیه‌ای روی همه برچسب‌دارها همان دور ۲ است:
+<span class="en">accuracy</span> برابر ۰٫۸۳۳۰ و <span class="en">macro F1</span> برابر ۰٫۷۰۱۰ روی ۵٬۲۵۸٬۱۳۵ سطر.
+روی ۸۰ درصد کنارگذاشته، که آموزش در آن نیست، همین دور ۰٫۸۳۱۲ و ۰٫۶۹۷۲ است.
 کلاس <span class="en">no_idea</span> در همه اجراها ضعیف ماند و <span class="en">F1</span> آن نزدیک ۰٫۴۲ تا ۰٫۴۵ است.
 </p>
+<p>
+چهار <span class="en">transformer</span> بار شدند. بقیه شبکه در همه اجراها منجمد ماند و فقط بخش نوشته‌شده در ستون trainable گرادیان گرفت.
+عدد کل از معماری همان مدل است و عدد trainable با چاپ دفترچه یکی است.
+<span class="en">TookaBERT</span> و <span class="en">ParsBERT</span> هر دو <span class="en">BERT</span> دوازده‌بلوکی‌اند. تفاوت کل پارامتر از اندازه واژگان است: ۴۸٬۰۰۰ در برابر ۱۰۰٬۰۰۰.
+سر دسته‌بند <span class="en">XLM-RoBERTa</span> یک لایه پنهان اضافه دارد، برای همین trainable سر آن ۵۹۲٬۸۹۹ است نه ۲٬۳۰۷.
+<span class="en">Shiraz</span> از خانواده <span class="en">MobileBERT</span> است و کوچک‌ترین مدل است، ولی آموزشش قبل از ذخیره وزن قطع شد.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>مدل</th>
+      <th>وزن عمومی</th>
+      <th>کل پارامتر</th>
+      <th>بخش trainable</th>
+      <th>پارامتر trainable</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="en">TookaBERT</span></td>
+      <td><span class="en">PartAI/TookaBERT-Base</span></td>
+      <td>۱۲۲٬۹۰۷٬۶۵۱</td>
+      <td><span class="en">classifier</span></td>
+      <td>۲٬۳۰۷</td>
+    </tr>
+    <tr>
+      <td><span class="en">TookaBERT</span></td>
+      <td><span class="en">PartAI/TookaBERT-Base</span></td>
+      <td>۱۲۲٬۹۰۷٬۶۵۱</td>
+      <td>بلوک آخر و <span class="en">classifier</span></td>
+      <td>۷٬۰۹۰٬۱۷۹</td>
+    </tr>
+    <tr>
+      <td><span class="en">TookaBERT</span></td>
+      <td><span class="en">PartAI/TookaBERT-Base</span></td>
+      <td>۱۲۲٬۹۰۷٬۶۵۱</td>
+      <td>بلوک‌های ۸ تا ۱۱ و <span class="en">classifier</span></td>
+      <td>۲۸٬۳۵۳٬۷۹۵</td>
+    </tr>
+    <tr>
+      <td><span class="en">ParsBERT</span></td>
+      <td><span class="en">HooshvareLab/bert-fa-base-uncased</span></td>
+      <td>۱۶۲٬۸۴۳٬۶۵۱</td>
+      <td><span class="en">classifier</span></td>
+      <td>۲٬۳۰۷</td>
+    </tr>
+    <tr>
+      <td><span class="en">ParsBERT</span></td>
+      <td><span class="en">HooshvareLab/bert-fa-base-uncased</span></td>
+      <td>۱۶۲٬۸۴۳٬۶۵۱</td>
+      <td>بلوک آخر و <span class="en">classifier</span></td>
+      <td>۷٬۰۹۰٬۱۷۹</td>
+    </tr>
+    <tr>
+      <td><span class="en">ParsBERT</span></td>
+      <td><span class="en">HooshvareLab/bert-fa-base-uncased</span></td>
+      <td>۱۶۲٬۸۴۳٬۶۵۱</td>
+      <td>بلوک‌های ۸ تا ۱۱، برش ۱۰٪</td>
+      <td>۲۸٬۳۵۳٬۷۹۵</td>
+    </tr>
+    <tr>
+      <td><span class="en">XLM-RoBERTa</span></td>
+      <td><span class="en">FacebookAI/xlm-roberta-base</span></td>
+      <td>۲۷۸٬۰۴۵٬۹۵۵</td>
+      <td><span class="en">classification head</span></td>
+      <td>۵۹۲٬۸۹۹</td>
+    </tr>
+    <tr>
+      <td><span class="en">XLM-RoBERTa</span></td>
+      <td><span class="en">FacebookAI/xlm-roberta-base</span></td>
+      <td>۲۷۸٬۰۴۵٬۹۵۵</td>
+      <td>بلوک آخر و <span class="en">classification head</span></td>
+      <td>۷٬۶۸۰٬۷۷۱</td>
+    </tr>
+    <tr>
+      <td><span class="en">Shiraz</span></td>
+      <td><span class="en">lifeweb-ai/shiraz</span></td>
+      <td>۲۷٬۰۷۶٬۶۱۱</td>
+      <td><span class="en">classifier</span></td>
+      <td>۱٬۵۳۹</td>
+    </tr>
+  </tbody>
+  <caption>
+    دورهای سرور، جریمه <span class="en">no_idea</span> و بازه امتیاز همان ردیف ۲۸٬۳۵۳٬۷۹۵ را آموزش دادند.
+    مدل احساس منتشرشده <span class="en">HooshvareLab/bert-fa-base-uncased-sentiment-digikala</span> همان اندازه <span class="en">ParsBERT</span> است و در این پروژه آموزش ندید.
+    لایه رگرسیون <span class="en">rate</span> هم آموزش ندید.
+  </caption>
+</table>
 <p>
 برای <span class="en">rating band</span>، یک دور <span class="en">TookaBERT</span> از خط پایه <span class="en">TF-IDF</span> بهتر شد:
 <span class="en">macro F1</span> آزمون ۰٫۵۸۲۲ در برابر ۰٫۵۴۹۲.
